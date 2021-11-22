@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "./AccessController.sol";
+import "./AccessControlRegistry.sol";
 
 /**
  * @dev Bank contract
  * hold deposited coin or erc20 tokens
  * even when exchange contract is upgraded, intended not upgrade to sustain token approved status
  */
-contract Bank is Context, ReentrancyGuard, AccessController {
+contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     using Address for address payable;
     using SafeERC20 for IERC20;
 
@@ -26,25 +27,39 @@ contract Bank is Context, ReentrancyGuard, AccessController {
     mapping(address => mapping(address => uint256)) private _erc20Deposits;
 
     event Deposited(address indexed payee, uint256 weiAmount);
-    event Withdrawn(address indexed payee, uint256 weiAmount);
+    event Withdrawn(
+        address indexed payee,
+        address recipient,
+        uint256 weiAmount
+    );
 
     event ERC20Deposited(
         IERC20 indexed token,
         address indexed sender,
-        uint256 weiAmount
+        uint256 amount
     );
     event ERC20Withdrawn(
         IERC20 indexed token,
-        address indexed to,
-        uint256 weiAmount
+        address indexed from,
+        address to,
+        uint256 amount
     );
 
     /**
      * @dev initializes the contract by setting a `transferAgent` and `accessControler`
      */
-    constructor(AccessControl _accessControler)
-        AccessController(_accessControler)
-    {}
+    constructor(AccessControl control) AccessControlRegistry(control) {}
+
+    /**
+     * @dev set new AccessControler address. Authenticated contract or person only
+     * @param newaccessControler AccessControler address
+     */
+    function setAccessControler(AccessControl newaccessControler)
+        public
+        onlyPermited(BANK_ACCESS_ROLE)
+    {
+        _setAccessControler(newaccessControler);
+    }
 
     //------------------ Native Coin ------------------//
 
@@ -64,18 +79,19 @@ contract Bank is Context, ReentrancyGuard, AccessController {
 
     /**
      * @dev withdraw balance for a payee. equivalent amount of wraped coin should be burned on the bridging chain
-     * @param payee The address whose funds will be withdrawn and transferred to.
+     * @param payee The address whose funds will be withdrawn
+     * @param recipient The address of transferred to
      * @param amount The amount of withdrawn coin
      */
-    function withdraw(address payable payee, uint256 amount)
-        public
-        nonReentrant
-        onlyPermited(BANK_ACCESS_ROLE)
-    {
-        require(_deposits[payee] >= amount, "exceed deposited amout");
+    function withdraw(
+        address payee,
+        address payable recipient,
+        uint256 amount
+    ) public nonReentrant onlyPermited(BANK_ACCESS_ROLE) {
+        require(_deposits[payee] >= amount, "exceed deposited amount");
         _deposits[payee] -= amount;
-        payee.sendValue(amount);
-        emit Withdrawn(payee, amount);
+        recipient.sendValue(amount);
+        emit Withdrawn(payee, recipient, amount);
     }
 
     //------------------ ERC20 Token ------------------//
@@ -94,7 +110,7 @@ contract Bank is Context, ReentrancyGuard, AccessController {
      * @param sender From address
      * @param amount Transfer amount
      */
-    function safeTransferFrom(
+    function depositERC20(
         IERC20 token,
         address sender,
         uint256 amount
@@ -107,20 +123,22 @@ contract Bank is Context, ReentrancyGuard, AccessController {
     /**
      * @dev call ERC20 `safeTransfer`. authenticated contract only
      * @param token ERC20 token address
-     * @param to To address
+     * @param from To address of the fund is withdrawn
+     * @param to The address of the fund is transferred
      * @param amount Transfer amount
      */
-    function safeTransfer(
+    function withdrawERC20(
         IERC20 token,
+        address from,
         address to,
         uint256 amount
     ) public onlyPermited(BANK_ACCESS_ROLE) {
         require(
-            _erc20Deposits[address(token)][to] >= amount,
-            "exceed deposited amout"
+            _erc20Deposits[address(token)][from] >= amount,
+            "exceed deposited amount"
         );
+        _erc20Deposits[address(token)][from] -= amount;
         token.safeTransfer(to, amount);
-        _erc20Deposits[address(token)][to] -= amount;
-        emit ERC20Withdrawn(token, to, amount);
+        emit ERC20Withdrawn(token, from, to, amount);
     }
 }
