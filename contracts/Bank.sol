@@ -28,14 +28,23 @@ contract Bank is Context, ReentrancyGuard, AccessController {
     event Deposited(address indexed payee, uint256 weiAmount);
     event Withdrawn(address indexed payee, uint256 weiAmount);
 
-    event ERC20Deposited(IERC20 indexed token, address indexed sender, uint256 weiAmount);
-    event ERC20Withdrawn(IERC20 indexed token, address indexed to, uint256 weiAmount);
+    event ERC20Deposited(
+        IERC20 indexed token,
+        address indexed sender,
+        uint256 weiAmount
+    );
+    event ERC20Withdrawn(
+        IERC20 indexed token,
+        address indexed to,
+        uint256 weiAmount
+    );
 
     /**
      * @dev initializes the contract by setting a `transferAgent` and `accessControler`
      */
-    constructor(AccessControl _accessControler) AccessController(_accessControler) {}
-
+    constructor(AccessControl _accessControler)
+        AccessController(_accessControler)
+    {}
 
     //------------------ Native Coin ------------------//
 
@@ -58,8 +67,12 @@ contract Bank is Context, ReentrancyGuard, AccessController {
      * @param payee The address whose funds will be withdrawn and transferred to.
      * @param amount The amount of withdrawn coin
      */
-    function withdraw(address payable payee, uint256 amount) public nonReentrant onlyPermited(BANK_ACCESS_ROLE) {
-        require(_deposits[payee] >=  amount, "exceed deposited amout");
+    function withdraw(address payable payee, uint256 amount)
+        public
+        nonReentrant
+        onlyPermited(BANK_ACCESS_ROLE)
+    {
+        require(_deposits[payee] >= amount, "exceed deposited amout");
         _deposits[payee] -= amount;
         payee.sendValue(amount);
         emit Withdrawn(payee, amount);
@@ -67,7 +80,11 @@ contract Bank is Context, ReentrancyGuard, AccessController {
 
     //------------------ ERC20 Token ------------------//
 
-    function erc20DepositsOf(IERC20 token, address owner) public view returns (uint256) {
+    function erc20DepositsOf(IERC20 token, address owner)
+        public
+        view
+        returns (uint256)
+    {
         return _erc20Deposits[address(token)][owner];
     }
 
@@ -98,7 +115,10 @@ contract Bank is Context, ReentrancyGuard, AccessController {
         address to,
         uint256 amount
     ) public onlyPermited(BANK_ACCESS_ROLE) {
-        require(_erc20Deposits[address(token)][to] >=  amount, "exceed deposited amout");
+        require(
+            _erc20Deposits[address(token)][to] >= amount,
+            "exceed deposited amout"
+        );
         token.safeTransfer(to, amount);
         _erc20Deposits[address(token)][to] -= amount;
         emit ERC20Withdrawn(token, to, amount);

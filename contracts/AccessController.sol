@@ -16,7 +16,10 @@ contract AccessController {
      * @dev checks access permission
      */
     modifier onlyPermited(bytes32 role) {
-        require(accessControler.hasRole(role, address(this)), "no access permission");
+        require(
+            accessControler.hasRole(role, address(this)),
+            "no access permission"
+        );
         _;
     }
 
@@ -31,7 +34,10 @@ contract AccessController {
      * @dev set new AccessControler address. Authenticated contract or person only
      * @param newaccessControler AccessControler address
      */
-    function _setAccessControler(AccessControl newaccessControler) internal virtual {
+    function _setAccessControler(AccessControl newaccessControler)
+        internal
+        virtual
+    {
         accessControler = newaccessControler;
     }
 }
