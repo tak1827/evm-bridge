@@ -25,6 +25,8 @@
     "@truffle/hdwallet-provider": "^1.5.1"
   },
   "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.15",
+    "chai": "^4.3.4",
     "prettier-plugin-solidity": "^1.0.0-beta.19"
   }
 }
