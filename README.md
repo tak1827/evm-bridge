@@ -1,5 +1,5 @@
-# quorum-bridge
-Bridging between Ethereum and Quorum for moving erc20 tokens back and forth
+# EVM Compatible Chain Bridge
+Bridging between EVM compatable chains, like Ethereum and Quorum for moving erc20 tokens back and forth
 
 # PreRequirements
 |  Software  |  Version  |
