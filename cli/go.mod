@@ -1,4 +1,4 @@
-module github.com/tak1827/evm-bridge
+module github.com/tak1827/evm-bridge/cli
 
 go 1.17
 
