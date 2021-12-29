@@ -22,7 +22,9 @@ if (
   !process.env.hasOwnProperty("DEPLOYER_KEY") ||
   !process.env.hasOwnProperty("NODE_URL")
 ) {
-  throw "must set env variables `DEPLOYER_KEY` and `NODE_URL`";
+  console.warn("must set env variables `DEPLOYER_KEY` and `NODE_URL`");
+  process.env.DEPLOYER_KEY = "d1c71e71b06e248c8dbe94d49ef6d6b0d64f5d71b1e33a0f39e14dadb070304a"
+  process.env.NODE_URL = "http://localhost:8545"
 }
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
