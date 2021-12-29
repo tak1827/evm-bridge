@@ -1,0 +1,32 @@
+syntax = "proto3";
+package tak1827.evmbridge.cli;
+
+option go_package = "github.com/tak1827/evm-bridge/cli/pb";
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option (gogoproto.gostring_all) = true;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.stringer_all) =  true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.equal_all) = true;
+
+message Transaction {
+  string id    = 1;  // Unique ID number for this person.
+  string from  = 2;
+  string to    = 3;
+  uint64 nonce = 4;
+
+  enum Status {
+    PENDING = 0;
+    SUCCESS = 1;
+    FAIL    = 2;
+  }
+
+  Status status = 5;
+
+  google.protobuf.Timestamp updated_at = 6 [(gogoproto.stdtime) = true];
+}

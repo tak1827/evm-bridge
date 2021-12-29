@@ -3,12 +3,17 @@ module github.com/tak1827/evm-bridge/cli
 go 1.17
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.10.14
+	github.com/gogo/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.2
 	github.com/pkg/errors v0.9.1
+	github.com/rs/zerolog v1.26.1
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.9.0
 	github.com/tak1827/transaction-confirmer v0.0.0-20211219152604-56967698f0b3
+	google.golang.org/protobuf v1.27.1
 )
 
 require (

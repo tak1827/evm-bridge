@@ -5,8 +5,10 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -19,7 +21,6 @@ import (
 )
 
 const (
-	DefaultGasLimit = 21000
 	DefaultGasPrice = int64(0) // 1 gwai
 )
 
@@ -27,10 +28,14 @@ var _ confirm.Client = (*Client)(nil)
 
 type Client struct {
 	ethclient *ethclient.Client
-	// rpcclient *rpc.Client
+
+	abi abi.ABI
 
 	Bank  *IBank
 	ERC20 *IERC20
+
+	bankAddr  common.Address
+	erc20Addr common.Address
 
 	GasPrice *big.Int
 }
@@ -44,15 +49,17 @@ func NewClient(ctx context.Context, endpoint string, bankHex, erc20Hex string, o
 
 	c.ethclient = ethclient.NewClient(rpcclient)
 	c.GasPrice = big.NewInt(int64(DefaultGasPrice))
+	c.bankAddr = common.HexToAddress(bankHex)
+	c.erc20Addr = common.HexToAddress(erc20Hex)
 
-	var (
-		bankAddr  = common.HexToAddress(bankHex)
-		erc20Addr = common.HexToAddress(erc20Hex)
-	)
-	if c.Bank, err = NewIBank(bankAddr, c.ethclient); err != nil {
+	if c.abi, err = abi.JSON(strings.NewReader(IERC20ABI)); err != nil {
 		return
 	}
-	if c.ERC20, err = NewIERC20(erc20Addr, c.ethclient); err != nil {
+
+	if c.Bank, err = NewIBank(c.bankAddr, c.ethclient); err != nil {
+		return
+	}
+	if c.ERC20, err = NewIERC20(c.erc20Addr, c.ethclient); err != nil {
 		return
 	}
 
@@ -75,9 +82,9 @@ func (c *Client) Nonce(ctx context.Context, privKey string) (nonce uint64, err e
 	return
 }
 
-func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address, amount *big.Int) (*types.Transaction, error) {
+func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address, value *big.Int, gasLimit uint64, data []byte) (*types.Transaction, error) {
 	var (
-		tx     = types.NewTransaction(nonce, to, amount, uint64(DefaultGasLimit), big.NewInt(int64(DefaultGasPrice)), nil)
+		tx     = types.NewTransaction(nonce, to, value, gasLimit, c.GasPrice, data)
 		signer = types.HomesteadSigner{}
 	)
 
@@ -87,6 +94,27 @@ func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address
 	}
 
 	return tx.WithSignature(signer, sig)
+}
+
+func (c *Client) TransferTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, recipient common.Address, amount *big.Int) (*types.Transaction, error) {
+	var (
+		auth     = bind.NewKeyedTransactor(priv)
+		to       = c.erc20Addr
+		input, _ = c.abi.Pack("transfer", recipient, amount)
+		msg      = ethereum.CallMsg{
+			From:     auth.From,
+			To:       &to,
+			GasPrice: c.GasPrice,
+			Data:     input,
+		}
+	)
+
+	gas, err := c.ethclient.EstimateGas(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.BuildTx(priv, nonce, to, nil, gas, input)
 }
 
 func (c *Client) SendTx(ctx context.Context, tx interface{}) (string, error) {
@@ -136,15 +164,6 @@ func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks 
 	return nil
 }
 
-func GenerateAddr() (addr common.Address, err error) {
-	priv, err := crypto.GenerateKey()
-	if err != nil {
-		return
-	}
-	addr = crypto.PubkeyToAddress(priv.PublicKey)
-	return
-}
-
 func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *uint64, handle func(e *IBankERC20Deposited) (stop bool)) error {
 	opt := bind.FilterOpts{
 		Start:   start,
@@ -164,6 +183,15 @@ func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *ui
 	}
 
 	return nil
+}
+
+func GenerateAddr() (addr common.Address, err error) {
+	priv, err := crypto.GenerateKey()
+	if err != nil {
+		return
+	}
+	addr = crypto.PubkeyToAddress(priv.PublicKey)
+	return
 }
 
 // ToWei decimals to wei
