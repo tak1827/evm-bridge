@@ -32,9 +32,9 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     /* mapping(erc20 address => mapping(owner addresss => amount)) */
     mapping(address => mapping(address => uint256)) private _erc20Deposits;
 
-    event Deposited(uint256 indexed index, address payee, uint256 weiAmount);
+    event Deposited(uint256 indexed id, address payee, uint256 weiAmount);
     event ERC20Deposited(
-        uint256 indexed index,
+        uint256 indexed id,
         IERC20 indexed token,
         address sender,
         uint256 amount
