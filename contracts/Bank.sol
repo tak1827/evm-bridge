@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./AccessControlRegistry.sol";
 
 /**
@@ -17,26 +18,31 @@ import "./AccessControlRegistry.sol";
 contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     using Address for address payable;
     using SafeERC20 for IERC20;
+    using Counters for Counters.Counter;
 
     /* access permission of this contract. the exchange contract is assume to be allocated this role */
     bytes32 public constant BANK_ACCESS_ROLE = keccak256("BANK_ACCESS_ROLE");
+    /* index of `Deposited` evnet */
+    Counters.Counter public indexDeposited;
+    /* index of `ERC20Deposited` evnet */
+    Counters.Counter public indexERC20Deposited;
     /* eth deposit amount map */
     mapping(address => uint256) private _deposits;
     /* erc20 token deposit amount map */
     /* mapping(erc20 address => mapping(owner addresss => amount)) */
     mapping(address => mapping(address => uint256)) private _erc20Deposits;
 
-    event Deposited(address indexed payee, uint256 weiAmount);
+    event Deposited(uint256 indexed index, address payee, uint256 weiAmount);
+    event ERC20Deposited(
+        uint256 indexed index,
+        IERC20 indexed token,
+        address sender,
+        uint256 amount
+    );
     event Withdrawn(
         address indexed payee,
         address recipient,
         uint256 weiAmount
-    );
-
-    event ERC20Deposited(
-        IERC20 indexed token,
-        address indexed sender,
-        uint256 amount
     );
     event ERC20Withdrawn(
         IERC20 indexed token,
@@ -74,7 +80,7 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     function deposit(address payee) public payable {
         uint256 amount = msg.value;
         _deposits[payee] += amount;
-        emit Deposited(payee, amount);
+        emit Deposited(assignIndex(indexDeposited), payee, amount);
     }
 
     /**
@@ -117,7 +123,12 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     ) public {
         token.safeTransferFrom(sender, address(this), amount);
         _erc20Deposits[address(token)][sender] += amount;
-        emit ERC20Deposited(token, sender, amount);
+        emit ERC20Deposited(
+            assignIndex(indexERC20Deposited),
+            token,
+            sender,
+            amount
+        );
     }
 
     /**
@@ -140,5 +151,13 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
         _erc20Deposits[address(token)][from] -= amount;
         token.safeTransfer(to, amount);
         emit ERC20Withdrawn(token, from, to, amount);
+    }
+
+    function assignIndex(Counters.Counter storage counter)
+        internal
+        returns (uint256)
+    {
+        counter.increment();
+        return counter.current() - 1;
     }
 }
