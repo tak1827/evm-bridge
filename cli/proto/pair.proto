@@ -14,9 +14,17 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.equal_all) = true;
 
-message ConfirmedBlock {
-  string hash   = 1;  // Unique ID number for this person.
-  uint64 number = 2;
+message Pair {
+  string inaddr  = 1;
+  string outaddr = 2;
 
-  google.protobuf.Timestamp updated_at = 3 [(gogoproto.stdtime) = true];
+  enum Type {
+    ORIGINAL = 0;
+    WRAPPED  = 1;
+  }
+
+  Type intype  = 3;
+  Type outtype = 4;
+
+  google.protobuf.Timestamp updated_at = 5 [(gogoproto.stdtime) = true];
 }

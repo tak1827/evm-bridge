@@ -20,7 +20,7 @@ const (
 	KeyEvent  = "event"
 
 	ModuleConfirmer = "confirmer"
-	ModuleMain      = "main"
+	ModuleBridge    = "bridge"
 )
 
 // global
@@ -61,16 +61,9 @@ func SetTimeFormat(format string) {
 	}
 }
 
-func Confirmer(event string) zerolog.Logger {
+func Bridge(event string) zerolog.Logger {
 	if event == "" {
-		return Logger.With().Str(KeyModule, ModuleConfirmer).Logger()
+		return Logger.With().Str(KeyModule, ModuleBridge).Logger()
 	}
-	return Logger.With().Str(KeyModule, ModuleConfirmer).Str(KeyEvent, event).Logger()
-}
-
-func Main(event string) zerolog.Logger {
-	if event == "" {
-		return Logger.With().Str(KeyModule, ModuleMain).Logger()
-	}
-	return Logger.With().Str(KeyModule, ModuleMain).Str(KeyEvent, event).Logger()
+	return Logger.With().Str(KeyModule, ModuleBridge).Str(KeyEvent, event).Logger()
 }

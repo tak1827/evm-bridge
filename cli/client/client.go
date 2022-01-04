@@ -117,6 +117,27 @@ func (c *Client) TransferTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce u
 	return c.BuildTx(priv, nonce, to, nil, gas, input)
 }
 
+func (c *Client) BuildMintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, account common.Address, amount *big.Int) (*types.Transaction, error) {
+	var (
+		auth     = bind.NewKeyedTransactor(priv)
+		to       = c.erc20Addr
+		input, _ = c.abi.Pack("mint", account, amount)
+		msg      = ethereum.CallMsg{
+			From:     auth.From,
+			To:       &to,
+			GasPrice: c.GasPrice,
+			Data:     input,
+		}
+	)
+
+	gas, err := c.ethclient.EstimateGas(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.BuildTx(priv, nonce, to, nil, gas, input)
+}
+
 func (c *Client) SendTx(ctx context.Context, tx interface{}) (string, error) {
 	signedTx := tx.(*types.Transaction)
 
@@ -164,7 +185,7 @@ func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks 
 	return nil
 }
 
-func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *uint64, handle func(e *IBankERC20Deposited) (stop bool)) error {
+func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *uint64, handle func(e *IBankERC20Deposited) error) error {
 	opt := bind.FilterOpts{
 		Start:   start,
 		End:     end,
@@ -177,8 +198,8 @@ func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *ui
 	}
 
 	for it.Next() {
-		if stop := handle(it.Event); stop {
-			break
+		if err := handle(it.Event); err != nil {
+			return err
 		}
 	}
 

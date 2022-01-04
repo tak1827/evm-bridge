@@ -14,19 +14,20 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.equal_all) = true;
 
-message Transaction {
-  string id    = 1;  // Unique ID number for this person.
-  string from  = 2;
-  string to    = 3;
-  uint64 nonce = 4;
+message EventERC20Deposited {
+  uint64 id     = 1;
+  string token  = 2;
+  string sender = 3;
+  string amount = 4;
+  uint32 retry  = 5;
 
-  enum Status {
-    PENDING = 0;
-    SUCCESS = 1;
-    FAIL    = 2;
-  }
+  EventStatus status = 6;
 
-  Status status = 5;
+  google.protobuf.Timestamp updated_at = 7 [(gogoproto.stdtime) = true];
+}
 
-  google.protobuf.Timestamp updated_at = 6 [(gogoproto.stdtime) = true];
+enum EventStatus {
+  UNDEFINED = 0;
+  FAILED    = 1;
+  SUCCEEDED = 2;
 }

@@ -27,7 +27,7 @@ var (
 )
 
 // IBankABI is the input ABI used to generate the binding from.
-const IBankABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Withdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"depositERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"depositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"erc20DepositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const IBankABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Withdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"depositERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"depositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"erc20DepositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // IBankFuncSigs maps the 4-byte function signature to its string representation.
 var IBankFuncSigs = map[string]string{
@@ -396,39 +396,40 @@ func (it *IBankDepositedIterator) Close() error {
 
 // IBankDeposited represents a Deposited event raised by the IBank contract.
 type IBankDeposited struct {
+	Id        *big.Int
 	Payee     common.Address
 	WeiAmount *big.Int
 	Raw       types.Log // Blockchain specific contextual infos
 }
 
-// FilterDeposited is a free log retrieval operation binding the contract event 0x2da466a7b24304f47e87fa2e1e5a81b9831ce54fec19055ce277ca2f39ba42c4.
+// FilterDeposited is a free log retrieval operation binding the contract event 0x1599c0fcf897af5babc2bfcf707f5dc050f841b044d97c3251ecec35b9abf80b.
 //
-// Solidity: event Deposited(address indexed payee, uint256 weiAmount)
-func (_IBank *IBankFilterer) FilterDeposited(opts *bind.FilterOpts, payee []common.Address) (*IBankDepositedIterator, error) {
+// Solidity: event Deposited(uint256 indexed id, address payee, uint256 weiAmount)
+func (_IBank *IBankFilterer) FilterDeposited(opts *bind.FilterOpts, id []*big.Int) (*IBankDepositedIterator, error) {
 
-	var payeeRule []interface{}
-	for _, payeeItem := range payee {
-		payeeRule = append(payeeRule, payeeItem)
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
 	}
 
-	logs, sub, err := _IBank.contract.FilterLogs(opts, "Deposited", payeeRule)
+	logs, sub, err := _IBank.contract.FilterLogs(opts, "Deposited", idRule)
 	if err != nil {
 		return nil, err
 	}
 	return &IBankDepositedIterator{contract: _IBank.contract, event: "Deposited", logs: logs, sub: sub}, nil
 }
 
-// WatchDeposited is a free log subscription operation binding the contract event 0x2da466a7b24304f47e87fa2e1e5a81b9831ce54fec19055ce277ca2f39ba42c4.
+// WatchDeposited is a free log subscription operation binding the contract event 0x1599c0fcf897af5babc2bfcf707f5dc050f841b044d97c3251ecec35b9abf80b.
 //
-// Solidity: event Deposited(address indexed payee, uint256 weiAmount)
-func (_IBank *IBankFilterer) WatchDeposited(opts *bind.WatchOpts, sink chan<- *IBankDeposited, payee []common.Address) (event.Subscription, error) {
+// Solidity: event Deposited(uint256 indexed id, address payee, uint256 weiAmount)
+func (_IBank *IBankFilterer) WatchDeposited(opts *bind.WatchOpts, sink chan<- *IBankDeposited, id []*big.Int) (event.Subscription, error) {
 
-	var payeeRule []interface{}
-	for _, payeeItem := range payee {
-		payeeRule = append(payeeRule, payeeItem)
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
 	}
 
-	logs, sub, err := _IBank.contract.WatchLogs(opts, "Deposited", payeeRule)
+	logs, sub, err := _IBank.contract.WatchLogs(opts, "Deposited", idRule)
 	if err != nil {
 		return nil, err
 	}
@@ -460,9 +461,9 @@ func (_IBank *IBankFilterer) WatchDeposited(opts *bind.WatchOpts, sink chan<- *I
 	}), nil
 }
 
-// ParseDeposited is a log parse operation binding the contract event 0x2da466a7b24304f47e87fa2e1e5a81b9831ce54fec19055ce277ca2f39ba42c4.
+// ParseDeposited is a log parse operation binding the contract event 0x1599c0fcf897af5babc2bfcf707f5dc050f841b044d97c3251ecec35b9abf80b.
 //
-// Solidity: event Deposited(address indexed payee, uint256 weiAmount)
+// Solidity: event Deposited(uint256 indexed id, address payee, uint256 weiAmount)
 func (_IBank *IBankFilterer) ParseDeposited(log types.Log) (*IBankDeposited, error) {
 	event := new(IBankDeposited)
 	if err := _IBank.contract.UnpackLog(event, "Deposited", log); err != nil {
@@ -541,48 +542,49 @@ func (it *IBankERC20DepositedIterator) Close() error {
 
 // IBankERC20Deposited represents a ERC20Deposited event raised by the IBank contract.
 type IBankERC20Deposited struct {
+	Id     *big.Int
 	Token  common.Address
 	Sender common.Address
 	Amount *big.Int
 	Raw    types.Log // Blockchain specific contextual infos
 }
 
-// FilterERC20Deposited is a free log retrieval operation binding the contract event 0xe33e9822e3317b004d587136bab2627ea1ecfbba4eb79abddd0a56cfdd09c0e1.
+// FilterERC20Deposited is a free log retrieval operation binding the contract event 0x54b55b0dca2281471c1e9b3db0a1397b951657e8c4c8551f4b26316d1408097d.
 //
-// Solidity: event ERC20Deposited(address indexed token, address indexed sender, uint256 amount)
-func (_IBank *IBankFilterer) FilterERC20Deposited(opts *bind.FilterOpts, token []common.Address, sender []common.Address) (*IBankERC20DepositedIterator, error) {
+// Solidity: event ERC20Deposited(uint256 indexed id, address indexed token, address sender, uint256 amount)
+func (_IBank *IBankFilterer) FilterERC20Deposited(opts *bind.FilterOpts, id []*big.Int, token []common.Address) (*IBankERC20DepositedIterator, error) {
 
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var senderRule []interface{}
-	for _, senderItem := range sender {
-		senderRule = append(senderRule, senderItem)
-	}
 
-	logs, sub, err := _IBank.contract.FilterLogs(opts, "ERC20Deposited", tokenRule, senderRule)
+	logs, sub, err := _IBank.contract.FilterLogs(opts, "ERC20Deposited", idRule, tokenRule)
 	if err != nil {
 		return nil, err
 	}
 	return &IBankERC20DepositedIterator{contract: _IBank.contract, event: "ERC20Deposited", logs: logs, sub: sub}, nil
 }
 
-// WatchERC20Deposited is a free log subscription operation binding the contract event 0xe33e9822e3317b004d587136bab2627ea1ecfbba4eb79abddd0a56cfdd09c0e1.
+// WatchERC20Deposited is a free log subscription operation binding the contract event 0x54b55b0dca2281471c1e9b3db0a1397b951657e8c4c8551f4b26316d1408097d.
 //
-// Solidity: event ERC20Deposited(address indexed token, address indexed sender, uint256 amount)
-func (_IBank *IBankFilterer) WatchERC20Deposited(opts *bind.WatchOpts, sink chan<- *IBankERC20Deposited, token []common.Address, sender []common.Address) (event.Subscription, error) {
+// Solidity: event ERC20Deposited(uint256 indexed id, address indexed token, address sender, uint256 amount)
+func (_IBank *IBankFilterer) WatchERC20Deposited(opts *bind.WatchOpts, sink chan<- *IBankERC20Deposited, id []*big.Int, token []common.Address) (event.Subscription, error) {
 
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var senderRule []interface{}
-	for _, senderItem := range sender {
-		senderRule = append(senderRule, senderItem)
-	}
 
-	logs, sub, err := _IBank.contract.WatchLogs(opts, "ERC20Deposited", tokenRule, senderRule)
+	logs, sub, err := _IBank.contract.WatchLogs(opts, "ERC20Deposited", idRule, tokenRule)
 	if err != nil {
 		return nil, err
 	}
@@ -614,9 +616,9 @@ func (_IBank *IBankFilterer) WatchERC20Deposited(opts *bind.WatchOpts, sink chan
 	}), nil
 }
 
-// ParseERC20Deposited is a log parse operation binding the contract event 0xe33e9822e3317b004d587136bab2627ea1ecfbba4eb79abddd0a56cfdd09c0e1.
+// ParseERC20Deposited is a log parse operation binding the contract event 0x54b55b0dca2281471c1e9b3db0a1397b951657e8c4c8551f4b26316d1408097d.
 //
-// Solidity: event ERC20Deposited(address indexed token, address indexed sender, uint256 amount)
+// Solidity: event ERC20Deposited(uint256 indexed id, address indexed token, address sender, uint256 amount)
 func (_IBank *IBankFilterer) ParseERC20Deposited(log types.Log) (*IBankERC20Deposited, error) {
 	event := new(IBankERC20Deposited)
 	if err := _IBank.contract.UnpackLog(event, "ERC20Deposited", log); err != nil {
