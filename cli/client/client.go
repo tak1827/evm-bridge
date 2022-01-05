@@ -17,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
+	"github.com/tak1827/nonce-incrementor/nonce"
 	"github.com/tak1827/transaction-confirmer/confirm"
 )
 
@@ -24,12 +25,15 @@ const (
 	DefaultGasPrice = int64(0) // 1 gwai
 )
 
-var _ confirm.Client = (*Client)(nil)
+var (
+	_ confirm.Client = (*Client)(nil)
+	_ nonce.Client   = (*Client)(nil)
+)
 
 type Client struct {
 	ethclient *ethclient.Client
 
-	abi abi.ABI
+	erc20ABI abi.ABI
 
 	Bank  *IBank
 	ERC20 *IERC20
@@ -52,7 +56,7 @@ func NewClient(ctx context.Context, endpoint string, bankHex, erc20Hex string, o
 	c.bankAddr = common.HexToAddress(bankHex)
 	c.erc20Addr = common.HexToAddress(erc20Hex)
 
-	if c.abi, err = abi.JSON(strings.NewReader(IERC20ABI)); err != nil {
+	if c.erc20ABI, err = abi.JSON(strings.NewReader(IERC20ABI)); err != nil {
 		return
 	}
 
@@ -82,62 +86,6 @@ func (c *Client) Nonce(ctx context.Context, privKey string) (nonce uint64, err e
 	return
 }
 
-func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address, value *big.Int, gasLimit uint64, data []byte) (*types.Transaction, error) {
-	var (
-		tx     = types.NewTransaction(nonce, to, value, gasLimit, c.GasPrice, data)
-		signer = types.HomesteadSigner{}
-	)
-
-	sig, err := crypto.Sign(signer.Hash(tx).Bytes(), priv)
-	if err != nil {
-		return nil, errors.Wrap(err, "err Sign")
-	}
-
-	return tx.WithSignature(signer, sig)
-}
-
-func (c *Client) TransferTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, recipient common.Address, amount *big.Int) (*types.Transaction, error) {
-	var (
-		auth     = bind.NewKeyedTransactor(priv)
-		to       = c.erc20Addr
-		input, _ = c.abi.Pack("transfer", recipient, amount)
-		msg      = ethereum.CallMsg{
-			From:     auth.From,
-			To:       &to,
-			GasPrice: c.GasPrice,
-			Data:     input,
-		}
-	)
-
-	gas, err := c.ethclient.EstimateGas(ctx, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.BuildTx(priv, nonce, to, nil, gas, input)
-}
-
-func (c *Client) BuildMintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, account common.Address, amount *big.Int) (*types.Transaction, error) {
-	var (
-		auth     = bind.NewKeyedTransactor(priv)
-		to       = c.erc20Addr
-		input, _ = c.abi.Pack("mint", account, amount)
-		msg      = ethereum.CallMsg{
-			From:     auth.From,
-			To:       &to,
-			GasPrice: c.GasPrice,
-			Data:     input,
-		}
-	)
-
-	gas, err := c.ethclient.EstimateGas(ctx, msg)
-	if err != nil {
-		return nil, err
-	}
-
-	return c.BuildTx(priv, nonce, to, nil, gas, input)
-}
-
 func (c *Client) SendTx(ctx context.Context, tx interface{}) (string, error) {
 	signedTx := tx.(*types.Transaction)
 
@@ -148,18 +96,6 @@ func (c *Client) SendTx(ctx context.Context, tx interface{}) (string, error) {
 	return signedTx.Hash().Hex(), nil
 }
 
-func (c *Client) Receipt(ctx context.Context, hash string) (*types.Receipt, error) {
-	return c.ethclient.TransactionReceipt(ctx, common.HexToHash(hash))
-}
-
-func (c *Client) LatestBlockNumber(ctx context.Context) (uint64, error) {
-	header, err := c.ethclient.HeaderByNumber(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-	return header.Number.Uint64(), nil
-}
-
 func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks uint64) error {
 	recept, err := c.Receipt(ctx, hash)
 	if err != nil {
@@ -168,6 +104,8 @@ func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks 
 		}
 		return errors.Wrap(err, "err TransactionReceipt")
 	}
+
+	// c.CustomComfirm(hash, recept)
 
 	if recept.Status != 1 {
 		return confirm.ErrTxFailed
@@ -185,7 +123,119 @@ func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks 
 	return nil
 }
 
-func (c *Client) FilterERC20Deposited(ctx context.Context, start uint64, end *uint64, handle func(e *IBankERC20Deposited) error) error {
+func (c *Client) Receipt(ctx context.Context, hash string) (*types.Receipt, error) {
+	return c.ethclient.TransactionReceipt(ctx, common.HexToHash(hash))
+}
+
+func (c *Client) LatestBlockNumber(ctx context.Context) (uint64, error) {
+	header, err := c.ethclient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	return header.Number.Uint64(), nil
+}
+
+func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address, value *big.Int, gasLimit uint64, data []byte) (*types.Transaction, error) {
+	var (
+		tx     = types.NewTransaction(nonce, to, value, gasLimit, c.GasPrice, data)
+		signer = types.HomesteadSigner{}
+	)
+
+	sig, err := crypto.Sign(signer.Hash(tx).Bytes(), priv)
+	if err != nil {
+		return nil, errors.Wrap(err, "err Sign")
+	}
+
+	return tx.WithSignature(signer, sig)
+}
+
+func (c *Client) BuildMintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, account common.Address, amount *big.Int) (*types.Transaction, error) {
+	var (
+		auth     = bind.NewKeyedTransactor(priv)
+		to       = c.erc20Addr
+		input, _ = c.erc20ABI.Pack("mint", account, amount)
+		msg      = ethereum.CallMsg{
+			From:     auth.From,
+			To:       &to,
+			GasPrice: c.GasPrice,
+			Data:     input,
+		}
+	)
+
+	gas, err := c.ethclient.EstimateGas(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.BuildTx(priv, nonce, to, nil, gas, input)
+}
+
+func (c *Client) DepositERC20(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, amount int64) (*types.Transaction, error) {
+	var (
+		auth = bind.NewKeyedTransactor(priv)
+		a    = big.NewInt(amount)
+		opts = &bind.TransactOpts{
+			From:     auth.From,
+			Nonce:    nonce, // nil = use pending state
+			Signer:   auth.Signer,
+			GasPrice: c.GasPrice,
+			GasLimit: 0, // estimate
+			Context:  ctx,
+		}
+	)
+	return c.Bank.DepositERC20(opts, c.erc20Addr, auth.From, a)
+}
+
+func (c *Client) Deposit(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, amount int64) (*types.Transaction, error) {
+	var (
+		auth = bind.NewKeyedTransactor(priv)
+		a    = big.NewInt(amount)
+		opts = &bind.TransactOpts{
+			From:     auth.From,
+			Nonce:    nonce, // nil = use pending state
+			Signer:   auth.Signer,
+			GasPrice: c.GasPrice,
+			GasLimit: 0, // estimate
+			Context:  ctx,
+			Value:    a,
+		}
+	)
+	return c.Bank.Deposit(opts, auth.From)
+}
+
+type ReadClient struct {
+	ethclient *ethclient.Client
+
+	Bank     *IBank
+	bankAddr common.Address
+}
+
+func NewReadClient(ctx context.Context, endpoint string, bankHex string) (c ReadClient, err error) {
+	rpcclient, err := rpc.DialContext(ctx, endpoint)
+	if err != nil {
+		err = fmt.Errorf("failed to conecting endpoint(%s) err: %w", endpoint, err)
+		return
+	}
+
+	c.ethclient = ethclient.NewClient(rpcclient)
+	c.bankAddr = common.HexToAddress(bankHex)
+
+	if c.Bank, err = NewIBank(c.bankAddr, c.ethclient); err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *ReadClient) LatestBlockNumber(ctx context.Context) (uint64, error) {
+	header, err := c.ethclient.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	return header.Number.Uint64(), nil
+}
+
+func (c *ReadClient) FilterERC20Deposited(ctx context.Context, start uint64, end *uint64, handle func(e *IBankERC20Deposited) error) error {
 	opt := bind.FilterOpts{
 		Start:   start,
 		End:     end,

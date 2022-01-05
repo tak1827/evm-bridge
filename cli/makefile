@@ -13,7 +13,8 @@ install:
 
 .PHONY: test
 test:
-	go test -race ./...
+	MallocNanoZone=0 go test -race ./...
+# 	go test ./...
 
 bench:
 	go test ./... -bench=. -benchtime=10s

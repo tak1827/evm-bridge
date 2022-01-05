@@ -17,15 +17,20 @@ func (m *EventERC20Deposited) StoreKey() []byte {
 	return bytesutil.AppendUint64BE(nil, id)
 }
 
-func GetEventERC20(db store.Store, id uint64) (m EventERC20Deposited, err error) {
+func GetEventERC20(db store.Store, id uint64) (e EventERC20Deposited, err error) {
+	e.Id = id
+	e, err = e.Get(db)
+	return
+}
+
+func (m *EventERC20Deposited) Get(db store.Store) (e EventERC20Deposited, err error) {
 	s := GetEventERC20Store(db)
 
-	m.Id = id
 	v, err := s.Get(m.StoreKey())
 	if err != nil {
 		return
 	}
-	err = m.Unmarshal(v)
+	err = e.Unmarshal(v)
 	return
 }
 

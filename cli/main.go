@@ -46,7 +46,7 @@ func main() {
 
 	fmt.Printf("nonce: %d", nonce)
 
-	tx, err := c.TransferTx(ctx, priv, nonce, recipient, amount)
+	tx, err := c.BuildMintTx(ctx, priv, nonce, recipient, amount)
 	handleErr(err)
 
 	hash, err := c.SendTx(ctx, tx)
