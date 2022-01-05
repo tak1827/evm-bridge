@@ -7,7 +7,9 @@ import (
 	"sync"
 	"time"
 
+	// "github.com/davecgh/go-spew/spew"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/rs/zerolog"
 	"github.com/tak1827/evm-bridge/cli/client"
 	"github.com/tak1827/evm-bridge/cli/log"
@@ -30,20 +32,20 @@ type Bridge struct {
 	// addrPairMap map[string]string // cache of addr pair
 
 	CustomConfirmedHandler confirm.HashHandler
+	CustomErrHandler       confirm.ErrHandler
 
 	EventERC20s map[string]pb.EventERC20Deposited
 
 	StartERC20 uint64 // confirmed block number of depositERC20 event
 }
 
-func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, confirmer *confirm.Confirmer, privKey string, path string, custom confirm.HashHandler) (b Bridge, err error) {
-	b = Bridge{
-		client:                 c,
-		reaadClient:            rc,
-		confirmer:              confirmer,
-		logger:                 log.Bridge(""),
-		CustomConfirmedHandler: custom,
-		EventERC20s:            make(map[string]pb.EventERC20Deposited),
+func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, confirmer *confirm.Confirmer, privKey string, path string, opts ...Option) (b *Bridge, err error) {
+	b = &Bridge{
+		client:      c,
+		reaadClient: rc,
+		confirmer:   confirmer,
+		logger:      log.Bridge(""),
+		EventERC20s: make(map[string]pb.EventERC20Deposited),
 	}
 
 	b.confirmer.AfterTxConfirmed = b.confirmedHandler
@@ -67,7 +69,9 @@ func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, con
 		return
 	}
 
-	// b.addrPairMap = make(map[string]string)
+	for i := 0; i < len(opts); i++ {
+		opts[i].Apply(b)
+	}
 
 	return
 }
@@ -124,10 +128,7 @@ func (b *Bridge) UpdateStartERC20(num uint64) error {
 }
 
 func (b *Bridge) HandleERC20DepositedLogs(ctx context.Context) (end uint64, err error) {
-	var (
-		eventCh = make(chan pb.EventERC20Deposited, 256)
-		hash    string
-	)
+	eventCh := make(chan pb.EventERC20Deposited, 256)
 	if end, err = b.fetchERC20(ctx, eventCh); err != nil {
 		return
 	}
@@ -143,15 +144,13 @@ func (b *Bridge) HandleERC20DepositedLogs(ctx context.Context) (end uint64, err 
 			continue
 		}
 
-		if hash, err = b.sendERC20(ctx, e); err != nil {
+		if _, err = b.sendERC20(ctx, e); err != nil {
 			if errors.Is(err, ErrPairNotFound) {
 				b.logger.Warn().Msgf("pir not found, event: %v, err: %v", e, err)
 				continue
 			}
 			return
 		}
-
-		b.writeEventERC20s(hash, e)
 	}
 
 	return
@@ -184,19 +183,24 @@ func (b *Bridge) sendERC20(ctx context.Context, e pb.EventERC20Deposited) (hash 
 		return
 	}
 
+	var tx *types.Transaction
 	switch pair.Intype {
 	case pb.Pair_ORIGINAL:
-		if hash, err = b.mint(ctx, e); err != nil {
+		if tx, err = b.mint(ctx, e); err != nil {
 			return
 		}
 	case pb.Pair_WRAPPED:
 		//
 	}
 
+	hash = tx.Hash().Hex()
+	b.writeEventERC20s(hash, e)
+
+	err = b.confirmer.EnqueueTx(ctx, tx)
 	return
 }
 
-func (b *Bridge) mint(ctx context.Context, e pb.EventERC20Deposited) (hash string, err error) {
+func (b *Bridge) mint(ctx context.Context, e pb.EventERC20Deposited) (tx *types.Transaction, err error) {
 	nonce, err := b.wallet.IncrementNonce()
 	if err != nil {
 		return
@@ -206,61 +210,7 @@ func (b *Bridge) mint(ctx context.Context, e pb.EventERC20Deposited) (hash strin
 	amount := new(big.Int)
 	amount.SetString(e.Amount, 10)
 
-	tx, err := b.client.BuildMintTx(ctx, b.wallet.priv, nonce, sender, amount)
-	if err != nil {
-		return
-	}
-
-	if err = b.confirmer.EnqueueTx(ctx, tx); err != nil {
-		return
-	}
-
-	hash = tx.Hash().Hex()
-	return
-}
-
-func (b *Bridge) erc20ConfirmedHandler(h string) (err error) {
-	e, exist := b.readEventERC20s(h)
-	if !exist {
-		return
-	}
-
-	b.Lock()
-	delete(b.EventERC20s, h)
-	b.Unlock()
-
-	b.logger.Info().Msgf("erc20 confirmed, h: %s", h)
-
-	e.Status = pb.EventStatus_SUCCEEDED
-
-	if err = e.Put(b.db); err != nil {
-		return
-	}
-
-	return
-}
-
-func (b *Bridge) erc20ErrHandler(h string, err error) {
-	e, exist := b.readEventERC20s(h)
-	if !exist {
-		return
-	}
-
-	if e.Retry >= 3 || !errors.Is(err, confirm.ErrTxFailed) {
-		b.logger.Warn().Msgf("failed handle erc20 log(%v), hash: %s, err: %v", e, h, err)
-		e.Status = pb.EventStatus_FAILED
-		if err = e.Put(b.db); err != nil {
-			b.logger.Warn().Msgf("failed to put event(%v), hash: %s, err: %v", e, h, err)
-		}
-		return
-	}
-
-	e.Retry++
-	b.writeEventERC20s(h, e)
-
-	if _, err = b.sendERC20(context.Background(), e); err != nil {
-		b.logger.Warn().Msgf("failed mint event(%v), hash: %s, err: %v", e, h, err)
-	}
+	return b.client.BuildMintTx(ctx, b.wallet.priv, nonce, sender, amount)
 }
 
 func (b *Bridge) confirmedHandler(h string) (err error) {
@@ -275,21 +225,71 @@ func (b *Bridge) confirmedHandler(h string) (err error) {
 	return
 }
 
+func (b *Bridge) erc20ConfirmedHandler(h string) (err error) {
+	e, exist := b.readEventERC20s(h)
+	if !exist {
+		return
+	}
+
+	b.deleteEventERC20s(h)
+
+	b.logger.Info().Msgf("erc20 confirmed, h: %s", h)
+
+	e.Status = pb.EventStatus_SUCCEEDED
+
+	if err = e.Put(b.db); err != nil {
+		return
+	}
+
+	return
+}
+
 func (b *Bridge) confirmerErrHandler(h string, err error) {
+	if b.CustomErrHandler != nil {
+		b.CustomErrHandler(h, err)
+	}
 	b.erc20ErrHandler(h, err)
+}
+
+func (b *Bridge) erc20ErrHandler(h string, err error) {
+	e, exist := b.readEventERC20s(h)
+	if !exist {
+		return
+	}
+	b.deleteEventERC20s(h)
+
+	if e.Retry >= 3 || !errors.Is(err, confirm.ErrTxFailed) {
+		b.logger.Warn().Msgf("failed handle erc20 log(%v), hash: %s, err: %v", e, h, err)
+		e.Status = pb.EventStatus_FAILED
+		if err = e.Put(b.db); err != nil {
+			b.logger.Warn().Msgf("failed to put event(%v), hash: %s, err: %v", e, h, err)
+		}
+		return
+	}
+
+	e.Retry++
+
+	if _, err = b.sendERC20(context.Background(), e); err != nil {
+		b.logger.Warn().Msgf("failed mint event(%v), hash: %s, err: %v", e, h, err)
+	}
 }
 
 func (b *Bridge) readEventERC20s(h string) (pb.EventERC20Deposited, bool) {
 	b.Lock()
-	defer b.Unlock()
-
 	e, exist := b.EventERC20s[h]
+	b.Unlock()
+
 	return e, exist
 }
 
 func (b *Bridge) writeEventERC20s(h string, e pb.EventERC20Deposited) {
 	b.Lock()
-	defer b.Unlock()
-
 	b.EventERC20s[h] = e
+	b.Unlock()
+}
+
+func (b *Bridge) deleteEventERC20s(h string) {
+	b.Lock()
+	delete(b.EventERC20s, h)
+	b.Unlock()
 }
