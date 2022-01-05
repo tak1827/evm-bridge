@@ -104,6 +104,79 @@ func TestHandleERC20DepositedLogs(t *testing.T) {
 	bridge.Close(cancel, 0, true)
 }
 
+// func TestRetry(t *testing.T) {
+// 	var (
+// 		ctx, cancel    = context.WithCancel(context.Background())
+// 		sentTxs        = make(map[string]pb.EventERC20Deposited)
+// 		expectedAmount = int64(10)
+// 	)
+// 	c, err := client.NewClient(ctx, Endpoint, BankHex, ERC20Hex)
+// 	require.NoError(t, err)
+
+// 	rc, err := client.NewReadClient(ctx, Endpoint, BankHex)
+// 	require.NoError(t, err)
+
+// 	confirmer := confirm.NewConfirmer(&c, QueueSize, confirm.WithWorkers(2), confirm.WithWorkerInterval(100))
+// 	confirm.NewConfirmer(&c, QueueSize, confirm.WithWorkers(2), confirm.WithWorkerInterval(10))
+// 	bridge, err := NewBridge(ctx, &c, &rc, &confirmer, PrivKey, "", nil)
+// 	require.NoError(t, err)
+// 	err = bridge.Start(ctx)
+// 	require.NoError(t, err)
+
+// 	pair := pb.Pair{
+// 		Inaddr:  ERC20Hex,
+// 		Outaddr: ERC20Hex,
+// 		Intype:  pb.Pair_ORIGINAL,
+// 	}
+// 	err = pair.Put(bridge.db)
+// 	require.NoError(t, err)
+
+// 	timer := time.NewTicker(100 * time.Millisecond)
+// 	defer timer.Stop()
+
+// 	var (
+// 		counter int
+// 		end     uint64
+// 	)
+// 	for {
+// 		<-timer.C
+// 		if !bridge.canClose() {
+// 			incrementBlock(t, &bridge, ctx, expectedAmount, 3)
+// 			continue
+// 		}
+
+// 		bridge.StartERC20 = end
+// 		err = bridge.UpdateStartERC20(bridge.StartERC20)
+// 		require.NoError(t, err)
+
+// 		if counter >= 3 {
+// 			break
+// 		}
+
+// 		batchDepositERC20(t, &bridge, ctx, expectedAmount, 3)
+
+// 		end, err = bridge.HandleERC20DepositedLogs(ctx)
+// 		require.NoError(t, err)
+
+// 		counter++
+// 	}
+
+// 	for _, e := range sentTxs {
+// 		e, err = e.Get(bridge.db)
+// 		require.NoError(t, err)
+// 		require.Equal(t, pb.EventStatus_SUCCEEDED, e.Status)
+// 		amount, err := strconv.Atoi(e.Amount)
+// 		require.NoError(t, err)
+// 		require.Equal(t, expectedAmount, int64(amount))
+// 	}
+
+// 	block, err := pb.GetConfirmedBlockERC20(bridge.db)
+// 	require.NoError(t, err)
+// 	require.Equal(t, end, block.Number)
+
+// 	bridge.Close(cancel, 0, true)
+// }
+
 func incrementBlock(t *testing.T, bridge *Bridge, ctx context.Context, amount int64, size int) {
 	for i := 0; i < size; i++ {
 		_, err := bridge.client.Deposit(ctx, bridge.wallet.priv, nil, amount)

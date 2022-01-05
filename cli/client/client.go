@@ -32,16 +32,15 @@ var (
 
 type Client struct {
 	ethclient *ethclient.Client
+	GasPrice  *big.Int
 
-	erc20ABI abi.ABI
-
-	Bank  *IBank
-	ERC20 *IERC20
-
+	erc20ABI  abi.ABI
+	Bank      *IBank
+	ERC20     *IERC20
 	bankAddr  common.Address
 	erc20Addr common.Address
 
-	GasPrice *big.Int
+	CustomComfirm func(h string, recept *types.Receipt) error
 }
 
 func NewClient(ctx context.Context, endpoint string, bankHex, erc20Hex string, opts ...Option) (c Client, err error) {
@@ -105,7 +104,11 @@ func (c *Client) ConfirmTx(ctx context.Context, hash string, confirmationBlocks 
 		return errors.Wrap(err, "err TransactionReceipt")
 	}
 
-	// c.CustomComfirm(hash, recept)
+	if c.CustomComfirm != nil {
+		if err = c.CustomComfirm(hash, recept); err != nil {
+			return err
+		}
+	}
 
 	if recept.Status != 1 {
 		return confirm.ErrTxFailed

@@ -2,6 +2,8 @@ package client
 
 import (
 	"math/big"
+
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Option interface {
@@ -16,4 +18,14 @@ func (o GasPriceOpt) Apply(c *Client) error {
 }
 func WithGasPrice(gasPrice int64) GasPriceOpt {
 	return GasPriceOpt(gasPrice)
+}
+
+type CustomComfirm func(h string, recept *types.Receipt) error
+
+func (f CustomComfirm) Apply(c *Client) error {
+	c.CustomComfirm = CustomComfirm(f)
+	return nil
+}
+func WithCustomComfirm(f func(h string, recept *types.Receipt) error) CustomComfirm {
+	return CustomComfirm(f)
 }
