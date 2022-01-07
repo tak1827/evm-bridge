@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -26,11 +27,8 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     Counters.Counter public indexDeposited;
     /* index of `ERC20Deposited` evnet */
     Counters.Counter public indexERC20Deposited;
-    /* eth deposit amount map */
-    mapping(address => uint256) private _deposits;
-    /* erc20 token deposit amount map */
-    /* mapping(erc20 address => mapping(owner addresss => amount)) */
-    mapping(address => mapping(address => uint256)) private _erc20Deposits;
+    /* index of `NFTDeposited` evnet */
+    Counters.Counter public indexNFTDeposited;
 
     event Deposited(uint256 indexed id, address payee, uint256 weiAmount);
     event ERC20Deposited(
@@ -39,17 +37,19 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
         address sender,
         uint256 amount
     );
+    event NFTDeposited(
+        uint256 indexed id,
+        IERC721 indexed token,
+        address sender,
+        uint256 tokenid
+    );
     event Withdrawn(
         address indexed payee,
         address recipient,
         uint256 weiAmount
     );
-    event ERC20Withdrawn(
-        IERC20 indexed token,
-        address indexed from,
-        address to,
-        uint256 amount
-    );
+    event ERC20Withdrawn(IERC20 indexed token, address to, uint256 amount);
+    event NFTWithdrawn(IERC721 indexed token, address to, uint256 tokenid);
 
     /**
      * @dev initializes the contract by setting a `transferAgent` and `accessControler`
@@ -69,17 +69,12 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
 
     //------------------ Native Coin ------------------//
 
-    function depositsOf(address owner) public view returns (uint256) {
-        return _deposits[owner];
-    }
-
     /**
      * @dev stores the sent amount. equivalent amout of wrapped coin is minted on the bridging chain
      * @param payee The destination address of the funds.
      */
     function deposit(address payee) public payable {
         uint256 amount = msg.value;
-        _deposits[payee] += amount;
         emit Deposited(assignIndex(indexDeposited), payee, amount);
     }
 
@@ -94,21 +89,12 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
         address payable recipient,
         uint256 amount
     ) public nonReentrant onlyPermited(BANK_ACCESS_ROLE) {
-        require(_deposits[payee] >= amount, "exceed deposited amount");
-        _deposits[payee] -= amount;
+        require(address(this).balance >= amount, "exceed deposited amount");
         recipient.sendValue(amount);
         emit Withdrawn(payee, recipient, amount);
     }
 
     //------------------ ERC20 Token ------------------//
-
-    function erc20DepositsOf(IERC20 token, address owner)
-        public
-        view
-        returns (uint256)
-    {
-        return _erc20Deposits[address(token)][owner];
-    }
 
     /**
      * @dev call ERC20 `safeTransferFrom`
@@ -122,7 +108,6 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
         uint256 amount
     ) public {
         token.safeTransferFrom(sender, address(this), amount);
-        _erc20Deposits[address(token)][sender] += amount;
         emit ERC20Deposited(
             assignIndex(indexERC20Deposited),
             token,
@@ -134,24 +119,56 @@ contract Bank is Context, ReentrancyGuard, AccessControlRegistry {
     /**
      * @dev call ERC20 `safeTransfer`. authenticated contract only
      * @param token ERC20 token address
-     * @param from To address of the fund is withdrawn
      * @param to The address of the fund is transferred
      * @param amount Transfer amount
      */
     function withdrawERC20(
         IERC20 token,
-        address from,
         address to,
         uint256 amount
     ) public onlyPermited(BANK_ACCESS_ROLE) {
-        require(
-            _erc20Deposits[address(token)][from] >= amount,
-            "exceed deposited amount"
-        );
-        _erc20Deposits[address(token)][from] -= amount;
         token.safeTransfer(to, amount);
-        emit ERC20Withdrawn(token, from, to, amount);
+        emit ERC20Withdrawn(token, to, amount);
     }
+
+    //------------------ NFT ------------------//
+
+    /**
+     * @dev call NFT `transferFrom`
+     * @param token NFT token address
+     * @param sender From address
+     * @param tokenid the token id
+     */
+    function depositNFT(
+        IERC721 token,
+        address sender,
+        uint256 tokenid
+    ) public {
+        token.transferFrom(sender, address(this), tokenid);
+        emit NFTDeposited(
+            assignIndex(indexNFTDeposited),
+            token,
+            sender,
+            tokenid
+        );
+    }
+
+    /**
+     * @dev call NFT `safeTransfer`. authenticated contract only
+     * @param token NFT token address
+     * @param to The address of the fund is transferred
+     * @param tokenid The token id
+     */
+    function withdrawNFT(
+        IERC721 token,
+        address to,
+        uint256 tokenid
+    ) public onlyPermited(BANK_ACCESS_ROLE) {
+        token.safeTransferFrom(address(this), to, tokenid);
+        emit NFTWithdrawn(token, to, tokenid);
+    }
+
+    //------------------ inner functions ------------------//
 
     function assignIndex(Counters.Counter storage counter)
         internal
