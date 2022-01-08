@@ -1,48 +1,70 @@
 package pb
 
 import (
+	"errors"
+
 	"github.com/tak1827/go-store/store"
 )
 
 var (
-	PREFIX_TCONIRMED_BLOCK = []byte(".confirmedblok")
+	PREFIX_CONFIRMED_BLOCK = []byte(".confirmedblok")
 
 	KEY_ERC20 = []byte(".erc20")
 	KEY_COIN  = []byte(".coin") // native coin, like ETH
+	KEY_NFT   = []byte(".nft")
 
 	blockStore *store.PrefixStore
 )
 
-func GetConfirmedBlockERC20(db store.Store) (b ConfirmedBlock, err error) {
-	s := GetBlockStore(db)
+type BlockType int
 
-	v, err := s.Get(KEY_ERC20)
+const (
+	BlockERC20 BlockType = iota
+	BlockNFT
+)
+
+func GetConfirmedBlock(db store.Store, t BlockType) (b ConfirmedBlock, err error) {
+	var (
+		s = getBlockStore(db)
+		v []byte
+	)
+	switch t {
+	case BlockERC20:
+		v, err = s.Get(KEY_ERC20)
+	case BlockNFT:
+		v, err = s.Get(KEY_NFT)
+	}
+
 	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			err = nil
+		}
 		return
 	}
 	err = b.Unmarshal(v)
 	return
 }
 
-func PutConfirmedBlockERC20(db store.Store, num uint64) error {
-	var (
-		s = GetBlockStore(db)
-		m ConfirmedBlock
-	)
-
-	m.Number = num
-
+func (m ConfirmedBlock) Put(db store.Store, t BlockType) error {
+	s := getBlockStore(db)
 	value, err := m.Marshal()
 	if err != nil {
 		return err
 	}
 
-	return s.Put(KEY_ERC20, value)
+	switch t {
+	case BlockERC20:
+		s.Put(KEY_ERC20, value)
+	case BlockNFT:
+		s.Put(KEY_NFT, value)
+	}
+
+	return nil
 }
 
-func GetBlockStore(db store.Store) *store.PrefixStore {
+func getBlockStore(db store.Store) *store.PrefixStore {
 	if blockStore == nil {
-		blockStore = store.NewPrefixStore(db, PREFIX_TCONIRMED_BLOCK)
+		blockStore = store.NewPrefixStore(db, PREFIX_CONFIRMED_BLOCK)
 	}
 	return blockStore
 }

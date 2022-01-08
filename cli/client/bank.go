@@ -27,16 +27,16 @@ var (
 )
 
 // IBankABI is the input ABI used to generate the binding from.
-const IBankABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Withdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"depositERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"depositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"erc20DepositsOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const IBankABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Deposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"ERC20Withdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenid\",\"type\":\"uint256\"}],\"name\":\"NFTDeposited\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenid\",\"type\":\"uint256\"}],\"name\":\"NFTWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"weiAmount\",\"type\":\"uint256\"}],\"name\":\"Withdrawn\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"depositERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenid\",\"type\":\"uint256\"}],\"name\":\"depositNFT\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"payee\",\"type\":\"address\"},{\"internalType\":\"addresspayable\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"withdrawERC20\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"tokenid\",\"type\":\"uint256\"}],\"name\":\"withdrawNFT\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // IBankFuncSigs maps the 4-byte function signature to its string representation.
 var IBankFuncSigs = map[string]string{
 	"f340fa01": "deposit(address)",
 	"1cad5a40": "depositERC20(address,address,uint256)",
-	"e3a9db1a": "depositsOf(address)",
-	"c2be7602": "erc20DepositsOf(address,address)",
+	"548bfbaa": "depositNFT(address,address,uint256)",
 	"d9caed12": "withdraw(address,address,uint256)",
-	"d23061db": "withdrawERC20(address,address,address,uint256)",
+	"44004cc1": "withdrawERC20(address,address,uint256)",
+	"bff863ec": "withdrawNFT(address,address,uint256)",
 }
 
 // IBank is an auto generated Go binding around an Ethereum contract.
@@ -181,68 +181,6 @@ func (_IBank *IBankTransactorRaw) Transact(opts *bind.TransactOpts, method strin
 	return _IBank.Contract.contract.Transact(opts, method, params...)
 }
 
-// DepositsOf is a free data retrieval call binding the contract method 0xe3a9db1a.
-//
-// Solidity: function depositsOf(address owner) view returns(uint256)
-func (_IBank *IBankCaller) DepositsOf(opts *bind.CallOpts, owner common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _IBank.contract.Call(opts, &out, "depositsOf", owner)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// DepositsOf is a free data retrieval call binding the contract method 0xe3a9db1a.
-//
-// Solidity: function depositsOf(address owner) view returns(uint256)
-func (_IBank *IBankSession) DepositsOf(owner common.Address) (*big.Int, error) {
-	return _IBank.Contract.DepositsOf(&_IBank.CallOpts, owner)
-}
-
-// DepositsOf is a free data retrieval call binding the contract method 0xe3a9db1a.
-//
-// Solidity: function depositsOf(address owner) view returns(uint256)
-func (_IBank *IBankCallerSession) DepositsOf(owner common.Address) (*big.Int, error) {
-	return _IBank.Contract.DepositsOf(&_IBank.CallOpts, owner)
-}
-
-// Erc20DepositsOf is a free data retrieval call binding the contract method 0xc2be7602.
-//
-// Solidity: function erc20DepositsOf(address token, address owner) view returns(uint256)
-func (_IBank *IBankCaller) Erc20DepositsOf(opts *bind.CallOpts, token common.Address, owner common.Address) (*big.Int, error) {
-	var out []interface{}
-	err := _IBank.contract.Call(opts, &out, "erc20DepositsOf", token, owner)
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// Erc20DepositsOf is a free data retrieval call binding the contract method 0xc2be7602.
-//
-// Solidity: function erc20DepositsOf(address token, address owner) view returns(uint256)
-func (_IBank *IBankSession) Erc20DepositsOf(token common.Address, owner common.Address) (*big.Int, error) {
-	return _IBank.Contract.Erc20DepositsOf(&_IBank.CallOpts, token, owner)
-}
-
-// Erc20DepositsOf is a free data retrieval call binding the contract method 0xc2be7602.
-//
-// Solidity: function erc20DepositsOf(address token, address owner) view returns(uint256)
-func (_IBank *IBankCallerSession) Erc20DepositsOf(token common.Address, owner common.Address) (*big.Int, error) {
-	return _IBank.Contract.Erc20DepositsOf(&_IBank.CallOpts, token, owner)
-}
-
 // Deposit is a paid mutator transaction binding the contract method 0xf340fa01.
 //
 // Solidity: function deposit(address payee) payable returns()
@@ -285,6 +223,27 @@ func (_IBank *IBankTransactorSession) DepositERC20(token common.Address, sender 
 	return _IBank.Contract.DepositERC20(&_IBank.TransactOpts, token, sender, amount)
 }
 
+// DepositNFT is a paid mutator transaction binding the contract method 0x548bfbaa.
+//
+// Solidity: function depositNFT(address token, address sender, uint256 tokenid) returns()
+func (_IBank *IBankTransactor) DepositNFT(opts *bind.TransactOpts, token common.Address, sender common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.contract.Transact(opts, "depositNFT", token, sender, tokenid)
+}
+
+// DepositNFT is a paid mutator transaction binding the contract method 0x548bfbaa.
+//
+// Solidity: function depositNFT(address token, address sender, uint256 tokenid) returns()
+func (_IBank *IBankSession) DepositNFT(token common.Address, sender common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.DepositNFT(&_IBank.TransactOpts, token, sender, tokenid)
+}
+
+// DepositNFT is a paid mutator transaction binding the contract method 0x548bfbaa.
+//
+// Solidity: function depositNFT(address token, address sender, uint256 tokenid) returns()
+func (_IBank *IBankTransactorSession) DepositNFT(token common.Address, sender common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.DepositNFT(&_IBank.TransactOpts, token, sender, tokenid)
+}
+
 // Withdraw is a paid mutator transaction binding the contract method 0xd9caed12.
 //
 // Solidity: function withdraw(address payee, address recipient, uint256 amount) returns()
@@ -306,25 +265,46 @@ func (_IBank *IBankTransactorSession) Withdraw(payee common.Address, recipient c
 	return _IBank.Contract.Withdraw(&_IBank.TransactOpts, payee, recipient, amount)
 }
 
-// WithdrawERC20 is a paid mutator transaction binding the contract method 0xd23061db.
+// WithdrawERC20 is a paid mutator transaction binding the contract method 0x44004cc1.
 //
-// Solidity: function withdrawERC20(address token, address from, address to, uint256 amount) returns()
-func (_IBank *IBankTransactor) WithdrawERC20(opts *bind.TransactOpts, token common.Address, from common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _IBank.contract.Transact(opts, "withdrawERC20", token, from, to, amount)
+// Solidity: function withdrawERC20(address token, address to, uint256 amount) returns()
+func (_IBank *IBankTransactor) WithdrawERC20(opts *bind.TransactOpts, token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _IBank.contract.Transact(opts, "withdrawERC20", token, to, amount)
 }
 
-// WithdrawERC20 is a paid mutator transaction binding the contract method 0xd23061db.
+// WithdrawERC20 is a paid mutator transaction binding the contract method 0x44004cc1.
 //
-// Solidity: function withdrawERC20(address token, address from, address to, uint256 amount) returns()
-func (_IBank *IBankSession) WithdrawERC20(token common.Address, from common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _IBank.Contract.WithdrawERC20(&_IBank.TransactOpts, token, from, to, amount)
+// Solidity: function withdrawERC20(address token, address to, uint256 amount) returns()
+func (_IBank *IBankSession) WithdrawERC20(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.WithdrawERC20(&_IBank.TransactOpts, token, to, amount)
 }
 
-// WithdrawERC20 is a paid mutator transaction binding the contract method 0xd23061db.
+// WithdrawERC20 is a paid mutator transaction binding the contract method 0x44004cc1.
 //
-// Solidity: function withdrawERC20(address token, address from, address to, uint256 amount) returns()
-func (_IBank *IBankTransactorSession) WithdrawERC20(token common.Address, from common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _IBank.Contract.WithdrawERC20(&_IBank.TransactOpts, token, from, to, amount)
+// Solidity: function withdrawERC20(address token, address to, uint256 amount) returns()
+func (_IBank *IBankTransactorSession) WithdrawERC20(token common.Address, to common.Address, amount *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.WithdrawERC20(&_IBank.TransactOpts, token, to, amount)
+}
+
+// WithdrawNFT is a paid mutator transaction binding the contract method 0xbff863ec.
+//
+// Solidity: function withdrawNFT(address token, address to, uint256 tokenid) returns()
+func (_IBank *IBankTransactor) WithdrawNFT(opts *bind.TransactOpts, token common.Address, to common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.contract.Transact(opts, "withdrawNFT", token, to, tokenid)
+}
+
+// WithdrawNFT is a paid mutator transaction binding the contract method 0xbff863ec.
+//
+// Solidity: function withdrawNFT(address token, address to, uint256 tokenid) returns()
+func (_IBank *IBankSession) WithdrawNFT(token common.Address, to common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.WithdrawNFT(&_IBank.TransactOpts, token, to, tokenid)
+}
+
+// WithdrawNFT is a paid mutator transaction binding the contract method 0xbff863ec.
+//
+// Solidity: function withdrawNFT(address token, address to, uint256 tokenid) returns()
+func (_IBank *IBankTransactorSession) WithdrawNFT(token common.Address, to common.Address, tokenid *big.Int) (*types.Transaction, error) {
+	return _IBank.Contract.WithdrawNFT(&_IBank.TransactOpts, token, to, tokenid)
 }
 
 // IBankDepositedIterator is returned from FilterDeposited and is used to iterate over the raw logs and unpacked data for Deposited events raised by the IBank contract.
@@ -698,48 +678,39 @@ func (it *IBankERC20WithdrawnIterator) Close() error {
 // IBankERC20Withdrawn represents a ERC20Withdrawn event raised by the IBank contract.
 type IBankERC20Withdrawn struct {
 	Token  common.Address
-	From   common.Address
 	To     common.Address
 	Amount *big.Int
 	Raw    types.Log // Blockchain specific contextual infos
 }
 
-// FilterERC20Withdrawn is a free log retrieval operation binding the contract event 0xb1ac6add0eec74b0d17d963174f2bcb70ecf3a0ebe76e11e2466692debc0e7d5.
+// FilterERC20Withdrawn is a free log retrieval operation binding the contract event 0xbfed55bdcd242e3dd0f60ddd7d1e87c67f61c34cd9527b3e6455d841b1025362.
 //
-// Solidity: event ERC20Withdrawn(address indexed token, address indexed from, address to, uint256 amount)
-func (_IBank *IBankFilterer) FilterERC20Withdrawn(opts *bind.FilterOpts, token []common.Address, from []common.Address) (*IBankERC20WithdrawnIterator, error) {
+// Solidity: event ERC20Withdrawn(address indexed token, address to, uint256 amount)
+func (_IBank *IBankFilterer) FilterERC20Withdrawn(opts *bind.FilterOpts, token []common.Address) (*IBankERC20WithdrawnIterator, error) {
 
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var fromRule []interface{}
-	for _, fromItem := range from {
-		fromRule = append(fromRule, fromItem)
-	}
 
-	logs, sub, err := _IBank.contract.FilterLogs(opts, "ERC20Withdrawn", tokenRule, fromRule)
+	logs, sub, err := _IBank.contract.FilterLogs(opts, "ERC20Withdrawn", tokenRule)
 	if err != nil {
 		return nil, err
 	}
 	return &IBankERC20WithdrawnIterator{contract: _IBank.contract, event: "ERC20Withdrawn", logs: logs, sub: sub}, nil
 }
 
-// WatchERC20Withdrawn is a free log subscription operation binding the contract event 0xb1ac6add0eec74b0d17d963174f2bcb70ecf3a0ebe76e11e2466692debc0e7d5.
+// WatchERC20Withdrawn is a free log subscription operation binding the contract event 0xbfed55bdcd242e3dd0f60ddd7d1e87c67f61c34cd9527b3e6455d841b1025362.
 //
-// Solidity: event ERC20Withdrawn(address indexed token, address indexed from, address to, uint256 amount)
-func (_IBank *IBankFilterer) WatchERC20Withdrawn(opts *bind.WatchOpts, sink chan<- *IBankERC20Withdrawn, token []common.Address, from []common.Address) (event.Subscription, error) {
+// Solidity: event ERC20Withdrawn(address indexed token, address to, uint256 amount)
+func (_IBank *IBankFilterer) WatchERC20Withdrawn(opts *bind.WatchOpts, sink chan<- *IBankERC20Withdrawn, token []common.Address) (event.Subscription, error) {
 
 	var tokenRule []interface{}
 	for _, tokenItem := range token {
 		tokenRule = append(tokenRule, tokenItem)
 	}
-	var fromRule []interface{}
-	for _, fromItem := range from {
-		fromRule = append(fromRule, fromItem)
-	}
 
-	logs, sub, err := _IBank.contract.WatchLogs(opts, "ERC20Withdrawn", tokenRule, fromRule)
+	logs, sub, err := _IBank.contract.WatchLogs(opts, "ERC20Withdrawn", tokenRule)
 	if err != nil {
 		return nil, err
 	}
@@ -771,12 +742,313 @@ func (_IBank *IBankFilterer) WatchERC20Withdrawn(opts *bind.WatchOpts, sink chan
 	}), nil
 }
 
-// ParseERC20Withdrawn is a log parse operation binding the contract event 0xb1ac6add0eec74b0d17d963174f2bcb70ecf3a0ebe76e11e2466692debc0e7d5.
+// ParseERC20Withdrawn is a log parse operation binding the contract event 0xbfed55bdcd242e3dd0f60ddd7d1e87c67f61c34cd9527b3e6455d841b1025362.
 //
-// Solidity: event ERC20Withdrawn(address indexed token, address indexed from, address to, uint256 amount)
+// Solidity: event ERC20Withdrawn(address indexed token, address to, uint256 amount)
 func (_IBank *IBankFilterer) ParseERC20Withdrawn(log types.Log) (*IBankERC20Withdrawn, error) {
 	event := new(IBankERC20Withdrawn)
 	if err := _IBank.contract.UnpackLog(event, "ERC20Withdrawn", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// IBankNFTDepositedIterator is returned from FilterNFTDeposited and is used to iterate over the raw logs and unpacked data for NFTDeposited events raised by the IBank contract.
+type IBankNFTDepositedIterator struct {
+	Event *IBankNFTDeposited // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *IBankNFTDepositedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(IBankNFTDeposited)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(IBankNFTDeposited)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *IBankNFTDepositedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *IBankNFTDepositedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// IBankNFTDeposited represents a NFTDeposited event raised by the IBank contract.
+type IBankNFTDeposited struct {
+	Id      *big.Int
+	Token   common.Address
+	Sender  common.Address
+	Tokenid *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterNFTDeposited is a free log retrieval operation binding the contract event 0x327b4964b21908843dad3036ddb4742ba7dac55409b0f9a23772775f7fe99afd.
+//
+// Solidity: event NFTDeposited(uint256 indexed id, address indexed token, address sender, uint256 tokenid)
+func (_IBank *IBankFilterer) FilterNFTDeposited(opts *bind.FilterOpts, id []*big.Int, token []common.Address) (*IBankNFTDepositedIterator, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _IBank.contract.FilterLogs(opts, "NFTDeposited", idRule, tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return &IBankNFTDepositedIterator{contract: _IBank.contract, event: "NFTDeposited", logs: logs, sub: sub}, nil
+}
+
+// WatchNFTDeposited is a free log subscription operation binding the contract event 0x327b4964b21908843dad3036ddb4742ba7dac55409b0f9a23772775f7fe99afd.
+//
+// Solidity: event NFTDeposited(uint256 indexed id, address indexed token, address sender, uint256 tokenid)
+func (_IBank *IBankFilterer) WatchNFTDeposited(opts *bind.WatchOpts, sink chan<- *IBankNFTDeposited, id []*big.Int, token []common.Address) (event.Subscription, error) {
+
+	var idRule []interface{}
+	for _, idItem := range id {
+		idRule = append(idRule, idItem)
+	}
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _IBank.contract.WatchLogs(opts, "NFTDeposited", idRule, tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(IBankNFTDeposited)
+				if err := _IBank.contract.UnpackLog(event, "NFTDeposited", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNFTDeposited is a log parse operation binding the contract event 0x327b4964b21908843dad3036ddb4742ba7dac55409b0f9a23772775f7fe99afd.
+//
+// Solidity: event NFTDeposited(uint256 indexed id, address indexed token, address sender, uint256 tokenid)
+func (_IBank *IBankFilterer) ParseNFTDeposited(log types.Log) (*IBankNFTDeposited, error) {
+	event := new(IBankNFTDeposited)
+	if err := _IBank.contract.UnpackLog(event, "NFTDeposited", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// IBankNFTWithdrawnIterator is returned from FilterNFTWithdrawn and is used to iterate over the raw logs and unpacked data for NFTWithdrawn events raised by the IBank contract.
+type IBankNFTWithdrawnIterator struct {
+	Event *IBankNFTWithdrawn // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *IBankNFTWithdrawnIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(IBankNFTWithdrawn)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(IBankNFTWithdrawn)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *IBankNFTWithdrawnIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *IBankNFTWithdrawnIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// IBankNFTWithdrawn represents a NFTWithdrawn event raised by the IBank contract.
+type IBankNFTWithdrawn struct {
+	Token   common.Address
+	To      common.Address
+	Tokenid *big.Int
+	Raw     types.Log // Blockchain specific contextual infos
+}
+
+// FilterNFTWithdrawn is a free log retrieval operation binding the contract event 0xbbde41973f9ce4890f7ad9762c23d8191f261fd643bdf13ed8bbc10549b49fcb.
+//
+// Solidity: event NFTWithdrawn(address indexed token, address to, uint256 tokenid)
+func (_IBank *IBankFilterer) FilterNFTWithdrawn(opts *bind.FilterOpts, token []common.Address) (*IBankNFTWithdrawnIterator, error) {
+
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _IBank.contract.FilterLogs(opts, "NFTWithdrawn", tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return &IBankNFTWithdrawnIterator{contract: _IBank.contract, event: "NFTWithdrawn", logs: logs, sub: sub}, nil
+}
+
+// WatchNFTWithdrawn is a free log subscription operation binding the contract event 0xbbde41973f9ce4890f7ad9762c23d8191f261fd643bdf13ed8bbc10549b49fcb.
+//
+// Solidity: event NFTWithdrawn(address indexed token, address to, uint256 tokenid)
+func (_IBank *IBankFilterer) WatchNFTWithdrawn(opts *bind.WatchOpts, sink chan<- *IBankNFTWithdrawn, token []common.Address) (event.Subscription, error) {
+
+	var tokenRule []interface{}
+	for _, tokenItem := range token {
+		tokenRule = append(tokenRule, tokenItem)
+	}
+
+	logs, sub, err := _IBank.contract.WatchLogs(opts, "NFTWithdrawn", tokenRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(IBankNFTWithdrawn)
+				if err := _IBank.contract.UnpackLog(event, "NFTWithdrawn", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNFTWithdrawn is a log parse operation binding the contract event 0xbbde41973f9ce4890f7ad9762c23d8191f261fd643bdf13ed8bbc10549b49fcb.
+//
+// Solidity: event NFTWithdrawn(address indexed token, address to, uint256 tokenid)
+func (_IBank *IBankFilterer) ParseNFTWithdrawn(log types.Log) (*IBankNFTWithdrawn, error) {
+	event := new(IBankNFTWithdrawn)
+	if err := _IBank.contract.UnpackLog(event, "NFTWithdrawn", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

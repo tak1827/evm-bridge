@@ -26,6 +26,18 @@ message EventERC20Deposited {
   google.protobuf.Timestamp updated_at = 7 [(gogoproto.stdtime) = true];
 }
 
+message EventNFTDeposited {
+  uint64 id      = 1;
+  string token   = 2;
+  string sender  = 3;
+  uint64 tokenid = 4;
+  uint32 retry   = 5;
+
+  EventStatus status = 6;
+
+  google.protobuf.Timestamp updated_at = 7 [(gogoproto.stdtime) = true];
+}
+
 enum EventStatus {
   UNDEFINED = 0;
   FAILED    = 1;

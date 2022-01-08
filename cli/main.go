@@ -14,6 +14,7 @@ const (
 	Endpoint = "http://localhost:8545"
 	BankHex  = "0xA7921938DED8fF056f0A77ce1e9Bca2A691e86a1"
 	ERC20Hex = "0xe868feADdAA8965b6e64BDD50a14cD41e3D5245D"
+	NFTHex   = "0xe868feADdAA8965b6e64BDD50a14cD41e3D5245D"
 
 	PrivKey = "d1c71e71b06e248c8dbe94d49ef6d6b0d64f5d71b1e33a0f39e14dadb070304a"
 )
@@ -32,7 +33,7 @@ func main() {
 		amount       = big.NewInt(1)
 	)
 
-	c, err := client.NewClient(ctx, Endpoint, BankHex, ERC20Hex)
+	c, err := client.NewClient(ctx, Endpoint, BankHex, ERC20Hex, NFTHex)
 	handleErr(err)
 
 	// err = c.FilterERC20Deposited(ctx, 0, nil, func(e *client.IBankERC20Deposited) (stop bool) {
@@ -46,7 +47,7 @@ func main() {
 
 	fmt.Printf("nonce: %d", nonce)
 
-	tx, err := c.BuildMintTx(ctx, priv, nonce, recipient, amount)
+	tx, err := c.BuildERC20MintTx(ctx, priv, nonce, recipient, amount)
 	handleErr(err)
 
 	hash, err := c.SendTx(ctx, tx)
