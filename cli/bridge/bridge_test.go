@@ -4,14 +4,13 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"strconv"
-	// "sync"
-	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	// "github.com/davecgh/go-spew/spew"
-	// "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 	"github.com/tak1827/evm-bridge/cli/client"
@@ -33,8 +32,8 @@ const (
 
 func TestHandleLogs(t *testing.T) {
 	var (
-		ctx, cancel = context.WithCancel(context.Background())
-		// ctx  = context.Background()
+		// ctx, cancel = context.WithCancel(context.Background())
+		ctx  = context.Background()
 		rotator = NewRotator(2)
 		pairs   = []pb.Pair{
 			pb.Pair{
@@ -135,9 +134,6 @@ func TestHandleLogs(t *testing.T) {
 		}
 	}
 
-	fmt.Printf("ConfirmedBlockERC20: %v\n", bridge.ConfirmedBlockERC20)
-	fmt.Printf("ConfirmedBlockNFT: %v\n", bridge.ConfirmedBlockNFT)
-
 	require.NoError(t, bridge.ConfirmedBlockERC20.Put(bridge.db, pb.BlockERC20))
 	require.NoError(t, bridge.ConfirmedBlockNFT.Put(bridge.db, pb.BlockNFT))
 
@@ -165,105 +161,103 @@ func TestHandleLogs(t *testing.T) {
 	require.NoError(t, block.Get(bridge.db, pb.BlockNFT))
 	require.Equal(t, true, block.Number > 0)
 
-	bridge.Close(cancel, 0, true)
+	// bridge.Close(cancel, 0, true)
 }
 
-// func TestRetry(t *testing.T) {
-// 	var (
-// 		ctx, cancel = context.WithCancel(context.Background())
-// 		pair        = pb.Pair{
-// 			Inaddr:  ERC20Hex,
-// 			Outaddr: ERC20Hex,
-// 			Intype:  pb.Pair_ORIGINAL,
-// 		}
-// 		m           sync.Mutex
-// 		retryFlg    = make(map[uint64]uint32)
-// 		sentCounter uint32
-// 		amount      = int64(10)
-// 		priv2, _    = crypto.HexToECDSA(PrivKey2)
-// 		c, _        = client.NewClient(ctx, Endpoint, BankHex, ERC20Hex, NFTHex)
-// 		rc, _       = client.NewReadClient(ctx, Endpoint, BankHex)
-// 		confirmer   = confirm.NewConfirmer(&c, QueueSize, confirm.WithWorkers(2), confirm.WithWorkerInterval(100))
-// 		bridge, _   = NewBridge(ctx, &c, &rc, &confirmer, PrivKey, "")
-// 		err         error
-// 	)
+func TestRetry(t *testing.T) {
+	var (
+		ctx, cancel = context.WithCancel(context.Background())
+		pair        = pb.Pair{
+			Inaddr:  ERC20Hex,
+			Outaddr: ERC20Hex,
+			Intype:  pb.Pair_ORIGINAL,
+		}
+		m           sync.Mutex
+		retryFlg    = make(map[uint64]uint32)
+		sentCounter uint32
+		amount      = int64(10)
+		priv2, _    = crypto.HexToECDSA(PrivKey2)
+		c, _        = client.NewClient(ctx, Endpoint, BankHex)
+		rc, _       = client.NewReadClient(ctx, Endpoint, BankHex)
+		confirmer   = confirm.NewConfirmer(&c, QueueSize, confirm.WithWorkers(2), confirm.WithWorkerInterval(100))
+		bridge, _   = NewBridge(ctx, &c, &rc, &confirmer, PrivKey, "")
+		err         error
+	)
 
-// 	confirmer.AfterTxSent = func(h string) (err error) {
-// 		bridge.Lock()
-// 		event, _ := bridge.EventMapERC20[h]
-// 		bridge.Unlock()
+	confirmer.AfterTxSent = func(h string) (err error) {
+		bridge.Lock()
+		event, _ := bridge.EventMapERC20[h]
+		bridge.Unlock()
 
-// 		m.Lock()
-// 		defer m.Unlock()
+		m.Lock()
+		defer m.Unlock()
 
-// 		_, ok := retryFlg[event.Id]
-// 		if ok {
-// 			return
-// 		}
-// 		retryFlg[event.Id] = sentCounter % 4
-// 		sentCounter++
-// 		return
-// 	}
+		_, ok := retryFlg[event.Id]
+		if ok {
+			return
+		}
+		retryFlg[event.Id] = sentCounter % 4
+		sentCounter++
+		return
+	}
 
-// 	c.CustomComfirm = func(h string, recept *types.Receipt) error {
-// 		bridge.Lock()
-// 		event := bridge.EventMapERC20[h]
-// 		bridge.Unlock()
+	c.CustomComfirm = func(h string, recept *types.Receipt) error {
+		bridge.Lock()
+		event := bridge.EventMapERC20[h]
+		bridge.Unlock()
 
-// 		m.Lock()
-// 		retry := retryFlg[event.Id]
-// 		m.Unlock()
+		m.Lock()
+		retry := retryFlg[event.Id]
+		m.Unlock()
 
-// 		if event.Retry < retry || retry == 3 {
-// 			recept.Status = 0
-// 		}
+		if event.Retry < retry || retry == 3 {
+			recept.Status = 0
+		}
 
-// 		return nil
-// 	}
+		return nil
+	}
 
-// 	bridge.Start(ctx)
-// 	pair.Put(bridge.db)
+	bridge.Start(ctx)
+	pair.Put(bridge.db)
 
-// 	timer := time.NewTicker(100 * time.Millisecond)
-// 	defer timer.Stop()
+	timer := time.NewTicker(100 * time.Millisecond)
+	defer timer.Stop()
 
-// 	var (
-// 		counter int
-// 		end     uint64
-// 	)
-// 	for {
-// 		<-timer.C
-// 		if !bridge.canClose() {
-// 			incrementBlock(t, bridge, ctx, priv2, amount, 3)
-// 			continue
-// 		}
+	var (
+		counter int
+	)
+	for {
+		<-timer.C
+		if !bridge.canClose() {
+			incrementBlock(t, bridge, ctx, priv2, 3)
+			continue
+		}
 
-// 		bridge.UpdateStartERC20(end)
+		if counter >= 3 {
+			break
+		}
 
-// 		if counter >= 3 {
-// 			break
-// 		}
+		batchDepositERC20(t, bridge, ctx, amount, 3)
 
-// 		batchDepositERC20(t, bridge, ctx, amount, 3)
+		bridge.ConfirmedBlockERC20.Number, err = bridge.FetchERC20(ctx)
+		require.NoError(t, err)
 
-// 		end, err = bridge.HandleERC20DepositedLogs(ctx)
-// 		require.NoError(t, err)
+		counter++
+	}
 
-// 		counter++
-// 	}
+	for id, retry := range retryFlg {
+		event := &pb.EventERC20Deposited{Id: id}
+		event.Get(bridge.db)
+		require.Equal(t, retry, event.Retry)
+		if retry >= 3 {
+			require.Equal(t, pb.EventStatus_FAILED, event.Status)
+		} else {
+			require.Equal(t, pb.EventStatus_SUCCEEDED, event.Status)
+		}
+	}
 
-// 	for id, retry := range retryFlg {
-// 		event, _ := pb.GetEventERC20(bridge.db, id)
-// 		require.Equal(t, retry, event.Retry)
-// 		if retry >= 3 {
-// 			require.Equal(t, pb.EventStatus_FAILED, event.Status)
-// 		} else {
-// 			require.Equal(t, pb.EventStatus_SUCCEEDED, event.Status)
-// 		}
-// 	}
-
-// 	bridge.Close(cancel, 0, true)
-// }
+	bridge.Close(cancel, 0, true)
+}
 
 func incrementBlock(t *testing.T, bridge *Bridge, ctx context.Context, priv *ecdsa.PrivateKey, size int) {
 	for i := 0; i < size; i++ {
