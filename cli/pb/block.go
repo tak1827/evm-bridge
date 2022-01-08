@@ -23,10 +23,11 @@ const (
 	BlockNFT
 )
 
-func GetConfirmedBlock(db store.Store, t BlockType) (b ConfirmedBlock, err error) {
+func (m *ConfirmedBlock) Get(db store.Store, t BlockType) error {
 	var (
-		s = getBlockStore(db)
-		v []byte
+		s   = getBlockStore(db)
+		v   []byte
+		err error
 	)
 	switch t {
 	case BlockERC20:
@@ -37,12 +38,11 @@ func GetConfirmedBlock(db store.Store, t BlockType) (b ConfirmedBlock, err error
 
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			err = nil
+			return nil
 		}
-		return
+		return err
 	}
-	err = b.Unmarshal(v)
-	return
+	return m.Unmarshal(v)
 }
 
 func (m ConfirmedBlock) Put(db store.Store, t BlockType) error {

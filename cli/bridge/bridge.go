@@ -30,13 +30,13 @@ type Bridge struct {
 	db        store.Store
 	logger    zerolog.Logger
 
-	// addrPairMap map[string]string // cache of addr pair
+	// TODO: cache of addr pair
 
 	CustomConfirmedHandler confirm.HashHandler
 	CustomErrHandler       confirm.ErrHandler
 
-	EventMapERC20       map[string]pb.EventERC20Deposited
-	EventMapNFT         map[string]pb.EventNFTDeposited
+	EventMapERC20       map[string]*pb.EventERC20Deposited
+	EventMapNFT         map[string]*pb.EventNFTDeposited
 	ConfirmedBlockERC20 pb.ConfirmedBlock
 	ConfirmedBlockNFT   pb.ConfirmedBlock
 }
@@ -47,8 +47,8 @@ func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, con
 		reaadClient:   rc,
 		confirmer:     confirmer,
 		logger:        log.Bridge(""),
-		EventMapERC20: make(map[string]pb.EventERC20Deposited),
-		EventMapNFT:   make(map[string]pb.EventNFTDeposited),
+		EventMapERC20: make(map[string]*pb.EventERC20Deposited),
+		EventMapNFT:   make(map[string]*pb.EventNFTDeposited),
 	}
 
 	b.confirmer.AfterTxConfirmed = b.confirmedHandler
@@ -60,10 +60,10 @@ func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, con
 	if b.wallet, err = NewWallet(ctx, c, privKey); err != nil {
 		return
 	}
-	if b.ConfirmedBlockERC20, err = pb.GetConfirmedBlock(b.db, pb.BlockERC20); err != nil {
+	if err = b.ConfirmedBlockERC20.Get(b.db, pb.BlockERC20); err != nil {
 		return
 	}
-	if b.ConfirmedBlockNFT, err = pb.GetConfirmedBlock(b.db, pb.BlockNFT); err != nil {
+	if err = b.ConfirmedBlockNFT.Get(b.db, pb.BlockNFT); err != nil {
 		return
 	}
 
@@ -124,15 +124,63 @@ func (b *Bridge) canClose() bool {
 	return len(b.EventMapERC20) == 0 && len(b.EventMapNFT) == 0
 }
 
-func (b *Bridge) HandleLogs(ctx context.Context, eventCh chan pb.Event) error {
+func (b *Bridge) FetchERC20(ctx context.Context) (uint64, error) {
+	eventCh := make(chan pb.Event, 256)
+
+	end, err := b.reaadClient.LatestBlockNumber(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	go func() {
+		defer close(eventCh)
+
+		if err = b.reaadClient.FilterERC20Deposited(ctx, b.ConfirmedBlockERC20.Number, &end, func(e *client.IBankERC20Deposited) error {
+			eventCh <- pb.ToEventERC20Deposited(e)
+			return nil
+		}); err != nil {
+			b.logger.Warn().Msgf("failed filter erc20 logs, err: %v", err)
+		}
+	}()
+
+	err = b.handleLogs(ctx, eventCh)
+	return end, err
+}
+
+func (b *Bridge) FetchNFT(ctx context.Context) (uint64, error) {
+	var (
+		eventCh  = make(chan pb.Event, 256)
+		start    = b.ConfirmedBlockNFT.Number
+		end, err = b.reaadClient.LatestBlockNumber(ctx)
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	go func() {
+		defer close(eventCh)
+
+		if err = b.reaadClient.FilterNFTDeposited(ctx, start, &end, func(e *client.IBankNFTDeposited) error {
+			eventCh <- pb.ToEventNFTDeposited(e)
+			return nil
+		}); err != nil {
+			b.logger.Warn().Msgf("failed filter nft logs, err: %v", err)
+		}
+	}()
+
+	err = b.handleLogs(ctx, eventCh)
+	return end, err
+}
+
+func (b *Bridge) handleLogs(ctx context.Context, eventCh chan pb.Event) error {
 	for e := range eventCh {
 		b.logger.Info().Msgf("filtered event: %v", e)
 
-		if storedEvent, err := e.Get(b.db); err != nil {
+		if err := e.Get(b.db); err != nil {
 			if !errors.Is(err, store.ErrNotFound) {
 				return err
 			}
-		} else if storedEvent.GStatus() == pb.EventStatus_SUCCEEDED {
+		} else if e.GetStatus() == pb.EventStatus_SUCCEEDED {
 			continue
 		}
 
@@ -149,20 +197,23 @@ func (b *Bridge) HandleLogs(ctx context.Context, eventCh chan pb.Event) error {
 }
 
 func (b *Bridge) send(ctx context.Context, e pb.Event) (hash string, err error) {
-	pair, err := pb.GetPair(b.db, e.GToken())
+	pair, err := pb.GetPair(b.db, e.GetToken())
 	if err != nil {
 		err = ErrPairNotFound
 		return
 	}
 
-	var tx *types.Transaction
+	var (
+		tx *types.Transaction
+		to = common.HexToAddress(pair.Outaddr)
+	)
 	switch pair.Intype {
 	case pb.Pair_ORIGINAL:
-		if tx, err = b.mint(ctx, e); err != nil {
+		if tx, err = b.mint(ctx, e, to); err != nil {
 			return
 		}
 	case pb.Pair_WRAPPED:
-		//
+		// TODO:
 	}
 
 	hash = tx.Hash().Hex()
@@ -172,22 +223,22 @@ func (b *Bridge) send(ctx context.Context, e pb.Event) (hash string, err error) 
 	return
 }
 
-func (b *Bridge) mint(ctx context.Context, e pb.Event) (tx *types.Transaction, err error) {
+func (b *Bridge) mint(ctx context.Context, e pb.Event, to common.Address) (tx *types.Transaction, err error) {
 	nonce, err := b.wallet.IncrementNonce()
 	if err != nil {
 		return
 	}
 
 	switch v := e.(type) {
-	case pb.EventERC20Deposited:
+	case *pb.EventERC20Deposited:
 		sender := common.HexToAddress(v.Sender)
 		amount := new(big.Int)
 		amount.SetString(v.Amount, 10)
-		tx, err = b.client.BuildERC20MintTx(ctx, b.wallet.priv, nonce, sender, amount)
-	case pb.EventNFTDeposited:
+		tx, err = b.client.BuildERC20MintTx(ctx, b.wallet.priv, nonce, to, sender, amount)
+	case *pb.EventNFTDeposited:
 		sender := common.HexToAddress(v.Sender)
 		tokenid := big.NewInt(int64(v.Tokenid))
-		tx, err = b.client.BuildNFTMintTx(ctx, b.wallet.priv, nonce, sender, tokenid)
+		tx, err = b.client.BuildNFTMintTx(ctx, b.wallet.priv, nonce, to, sender, tokenid)
 	default:
 		panic(fmt.Sprintf("unexpected type(%T)\n", v))
 	}
@@ -195,14 +246,65 @@ func (b *Bridge) mint(ctx context.Context, e pb.Event) (tx *types.Transaction, e
 	return
 }
 
+func (b *Bridge) confirmedHandler(h string) (err error) {
+	if b.CustomConfirmedHandler != nil {
+		if err = b.CustomConfirmedHandler(h); err != nil {
+			return
+		}
+	}
+
+	e, exist := b.readEventMap(h)
+	if !exist {
+		return
+	}
+	b.deleteEventMap(h)
+
+	b.logger.Info().Msgf("confirmed, hash: %s", h)
+
+	e.SetStatus(pb.EventStatus_SUCCEEDED)
+
+	if err = e.Put(b.db); err != nil {
+		return
+	}
+
+	return
+}
+
+func (b *Bridge) confirmerErrHandler(h string, err error) {
+	if b.CustomErrHandler != nil {
+		b.CustomErrHandler(h, err)
+	}
+
+	e, exist := b.readEventMap(h)
+	if !exist {
+		return
+	}
+	b.deleteEventMap(h)
+
+	if e.GetRetry() >= 3 || !errors.Is(err, confirm.ErrTxFailed) {
+		b.logger.Warn().Msgf("failed handle erc20 log(%v), hash: %s, err: %v", e, h, err)
+		e.SetStatus(pb.EventStatus_FAILED)
+		if err = e.Put(b.db); err != nil {
+			b.logger.Warn().Msgf("failed to put event(%v), hash: %s, err: %v", e, h, err)
+		}
+		return
+	}
+
+	e.SetRetry(e.GetRetry() + 1)
+
+	if _, err = b.send(context.Background(), e); err != nil {
+		b.logger.Warn().Msgf("failed mint event(%v), hash: %s, err: %v", e, h, err)
+	}
+}
+
 func (b *Bridge) writeEventMap(h string, e pb.Event) {
 	b.Lock()
 	defer b.Unlock()
 
 	switch v := e.(type) {
-	case pb.EventERC20Deposited:
+	case *pb.EventERC20Deposited:
 		b.EventMapERC20[h] = v
-	case pb.EventNFTDeposited:
+	case *pb.EventNFTDeposited:
 		b.EventMapNFT[h] = v
 	default:
 		panic(fmt.Sprintf("unexpected type(%T)\n", v))
@@ -239,101 +341,4 @@ func (b *Bridge) deleteEventMap(h string) {
 	}
 
 	return
-}
-
-func (b *Bridge) FetchERC20(ctx context.Context) (uint64, error) {
-	eventCh := make(chan pb.Event, 256)
-
-	end, err := b.reaadClient.LatestBlockNumber(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	go func() {
-		defer close(eventCh)
-
-		if err = b.reaadClient.FilterERC20Deposited(ctx, b.ConfirmedBlockERC20.Number, &end, func(e *client.IBankERC20Deposited) error {
-			eventCh <- pb.ToEventERC20Deposited(e)
-			return nil
-		}); err != nil {
-			b.logger.Warn().Msgf("failed filter erc20 logs, err: %v", err)
-		}
-	}()
-
-	err = b.HandleLogs(ctx, eventCh)
-	return end, err
-}
-
-func (b *Bridge) FetchNFT(ctx context.Context) (uint64, error) {
-	eventCh := make(chan pb.Event, 256)
-
-	end, err := b.reaadClient.LatestBlockNumber(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	go func() {
-		defer close(eventCh)
-
-		if err = b.reaadClient.FilterNFTDeposited(ctx, b.ConfirmedBlockNFT.Number, &end, func(e *client.IBankNFTDeposited) error {
-			eventCh <- pb.ToEventNFTDeposited(e)
-			return nil
-		}); err != nil {
-			b.logger.Warn().Msgf("failed filter nft logs, err: %v", err)
-		}
-	}()
-
-	err = b.HandleLogs(ctx, eventCh)
-	return end, err
-}
-
-func (b *Bridge) confirmedHandler(h string) (err error) {
-	if b.CustomConfirmedHandler != nil {
-		if err = b.CustomConfirmedHandler(h); err != nil {
-			return
-		}
-	}
-
-	e, exist := b.readEventMap(h)
-	if !exist {
-		return
-	}
-	b.deleteEventMap(h)
-
-	b.logger.Info().Msgf("confirmed, hash: %s", h)
-
-	e = e.SetStatus(pb.EventStatus_SUCCEEDED)
-
-	if err = e.Put(b.db); err != nil {
-		return
-	}
-
-	return
-}
-
-func (b *Bridge) confirmerErrHandler(h string, err error) {
-	if b.CustomErrHandler != nil {
-		b.CustomErrHandler(h, err)
-	}
-
-	e, exist := b.readEventMap(h)
-	if !exist {
-		return
-	}
-	b.deleteEventMap(h)
-
-	if e.GRetry() >= 3 || !errors.Is(err, confirm.ErrTxFailed) {
-		b.logger.Warn().Msgf("failed handle erc20 log(%v), hash: %s, err: %v", e, h, err)
-		e = e.SetStatus(pb.EventStatus_FAILED)
-		if err = e.Put(b.db); err != nil {
-			b.logger.Warn().Msgf("failed to put event(%v), hash: %s, err: %v", e, h, err)
-		}
-		return
-	}
-
-	e = e.SetRetry(e.GRetry() + 1)
-
-	if _, err = b.send(context.Background(), e); err != nil {
-		b.logger.Warn().Msgf("failed mint event(%v), hash: %s, err: %v", e, h, err)
-	}
 }

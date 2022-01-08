@@ -18,12 +18,12 @@ var (
 )
 
 type Event interface {
-	GRetry() uint32
-	SetRetry(retry uint32) Event
-	GStatus() EventStatus
-	SetStatus(status EventStatus) Event
-	GToken() string
-	Get(db store.Store) (Event, error)
+	GetRetry() uint32
+	SetRetry(retry uint32)
+	GetStatus() EventStatus
+	SetStatus(status EventStatus)
+	GetToken() string
+	Get(db store.Store) error
 	Put(db store.Store) error
 }
 
@@ -32,54 +32,34 @@ func (m *EventERC20Deposited) StoreKey() []byte {
 	return bytesutil.AppendUint64BE(nil, id)
 }
 
-func (m EventERC20Deposited) GRetry() uint32 {
-	return m.Retry
-}
-
-func (m EventERC20Deposited) SetRetry(retry uint32) Event {
+func (m *EventERC20Deposited) SetRetry(retry uint32) {
 	m.Retry = retry
-	return m
 }
 
-func (m EventERC20Deposited) GStatus() EventStatus {
-	return m.Status
-}
-
-func (m EventERC20Deposited) SetStatus(status EventStatus) Event {
+func (m *EventERC20Deposited) SetStatus(status EventStatus) {
 	m.Status = status
-	return m
 }
 
-func (m EventERC20Deposited) GToken() string {
-	return m.Token
-}
-
-func (m EventERC20Deposited) Get(db store.Store) (Event, error) {
-	var (
-		s = getEventERC20Store(db)
-		e EventERC20Deposited
-	)
+func (m *EventERC20Deposited) Get(db store.Store) error {
+	s := getEventERC20Store(db)
 	v, err := s.Get(m.StoreKey())
 	if err != nil {
-		return e, err
+		return err
 	}
-	err = e.Unmarshal(v)
-	return e, err
+	return m.Unmarshal(v)
 }
 
-func (m EventERC20Deposited) Put(db store.Store) error {
+func (m *EventERC20Deposited) Put(db store.Store) error {
 	s := getEventERC20Store(db)
-
 	value, err := m.Marshal()
 	if err != nil {
 		return err
 	}
-
 	return s.Put(m.StoreKey(), value)
 }
 
-func ToEventERC20Deposited(e *client.IBankERC20Deposited) EventERC20Deposited {
-	return EventERC20Deposited{
+func ToEventERC20Deposited(e *client.IBankERC20Deposited) *EventERC20Deposited {
+	return &EventERC20Deposited{
 		Id:     uint64(e.Id.Int64()),
 		Token:  e.Token.Hex(),
 		Sender: e.Sender.Hex(),
@@ -101,55 +81,34 @@ func (m *EventNFTDeposited) StoreKey() []byte {
 	return bytesutil.AppendUint64BE(nil, id)
 }
 
-func (m EventNFTDeposited) GRetry() uint32 {
-	return m.Retry
-}
-
-func (m EventNFTDeposited) SetRetry(retry uint32) Event {
+func (m *EventNFTDeposited) SetRetry(retry uint32) {
 	m.Retry = retry
-	return m
 }
 
-func (m EventNFTDeposited) GStatus() EventStatus {
-	return m.Status
-}
-
-func (m EventNFTDeposited) SetStatus(status EventStatus) Event {
+func (m *EventNFTDeposited) SetStatus(status EventStatus) {
 	m.Status = status
-	return m
 }
 
-func (m EventNFTDeposited) GToken() string {
-	return m.Token
-}
-
-func (m EventNFTDeposited) Get(db store.Store) (Event, error) {
-	var (
-		s = getEventNFTStore(db)
-		e EventNFTDeposited
-	)
-
+func (m *EventNFTDeposited) Get(db store.Store) error {
+	s := getEventNFTStore(db)
 	v, err := s.Get(m.StoreKey())
 	if err != nil {
-		return e, err
+		return err
 	}
-	err = e.Unmarshal(v)
-	return e, err
+	return m.Unmarshal(v)
 }
 
-func (m EventNFTDeposited) Put(db store.Store) error {
+func (m *EventNFTDeposited) Put(db store.Store) error {
 	s := getEventNFTStore(db)
-
 	value, err := m.Marshal()
 	if err != nil {
 		return err
 	}
-
 	return s.Put(m.StoreKey(), value)
 }
 
-func ToEventNFTDeposited(e *client.IBankNFTDeposited) EventNFTDeposited {
-	return EventNFTDeposited{
+func ToEventNFTDeposited(e *client.IBankNFTDeposited) *EventNFTDeposited {
+	return &EventNFTDeposited{
 		Id:      uint64(e.Id.Int64()),
 		Token:   e.Token.Hex(),
 		Sender:  e.Sender.Hex(),

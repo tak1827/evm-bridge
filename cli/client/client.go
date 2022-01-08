@@ -34,19 +34,15 @@ type Client struct {
 	ethclient *ethclient.Client
 	GasPrice  *big.Int
 
-	erc20ABI  abi.ABI
-	nftABI    abi.ABI
-	Bank      *IBank
-	ERC20     *IERC20
-	NFT       *IERC721
-	bankAddr  common.Address
-	erc20Addr common.Address
-	nftAddr   common.Address
+	erc20ABI abi.ABI
+	nftABI   abi.ABI
+	Bank     *IBank
+	bankAddr common.Address
 
 	CustomComfirm func(h string, recept *types.Receipt) error
 }
 
-func NewClient(ctx context.Context, endpoint string, bankHex, erc20Hex, nftHex string, opts ...Option) (c Client, err error) {
+func NewClient(ctx context.Context, endpoint string, bankHex string, opts ...Option) (c Client, err error) {
 	rpcclient, err := rpc.DialContext(ctx, endpoint)
 	if err != nil {
 		err = fmt.Errorf("failed to conecting endpoint(%s) err: %w", endpoint, err)
@@ -56,20 +52,16 @@ func NewClient(ctx context.Context, endpoint string, bankHex, erc20Hex, nftHex s
 	c.ethclient = ethclient.NewClient(rpcclient)
 	c.GasPrice = big.NewInt(int64(DefaultGasPrice))
 	c.bankAddr = common.HexToAddress(bankHex)
-	c.erc20Addr = common.HexToAddress(erc20Hex)
-	c.nftAddr = common.HexToAddress(nftHex)
 
 	if c.erc20ABI, err = abi.JSON(strings.NewReader(IERC20ABI)); err != nil {
 		return
 	}
 
+	if c.nftABI, err = abi.JSON(strings.NewReader(IERC721ABI)); err != nil {
+		return
+	}
+
 	if c.Bank, err = NewIBank(c.bankAddr, c.ethclient); err != nil {
-		return
-	}
-	if c.ERC20, err = NewIERC20(c.erc20Addr, c.ethclient); err != nil {
-		return
-	}
-	if c.NFT, err = NewIERC721(c.nftAddr, c.ethclient); err != nil {
 		return
 	}
 
@@ -159,10 +151,9 @@ func (c *Client) BuildTx(priv *ecdsa.PrivateKey, nonce uint64, to common.Address
 	return tx.WithSignature(signer, sig)
 }
 
-func (c *Client) BuildERC20MintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, account common.Address, amount *big.Int) (*types.Transaction, error) {
+func (c *Client) BuildERC20MintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, to, account common.Address, amount *big.Int) (*types.Transaction, error) {
 	var (
 		auth     = bind.NewKeyedTransactor(priv)
-		to       = c.erc20Addr
 		input, _ = c.erc20ABI.Pack("mint", account, amount)
 		msg      = ethereum.CallMsg{
 			From:     auth.From,
@@ -180,11 +171,10 @@ func (c *Client) BuildERC20MintTx(ctx context.Context, priv *ecdsa.PrivateKey, n
 	return c.BuildTx(priv, nonce, to, nil, gas, input)
 }
 
-func (c *Client) BuildNFTMintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, account common.Address, tokenid *big.Int) (*types.Transaction, error) {
+func (c *Client) BuildNFTMintTx(ctx context.Context, priv *ecdsa.PrivateKey, nonce uint64, to, account common.Address, tokenid *big.Int) (*types.Transaction, error) {
 	var (
 		auth     = bind.NewKeyedTransactor(priv)
-		to       = c.nftAddr
-		input, _ = c.nftABI.Pack("safeMint", tokenid, account)
+		input, _ = c.nftABI.Pack("safeMint", tokenid, account, "")
 		msg      = ethereum.CallMsg{
 			From:     auth.From,
 			To:       &to,
@@ -201,7 +191,7 @@ func (c *Client) BuildNFTMintTx(ctx context.Context, priv *ecdsa.PrivateKey, non
 	return c.BuildTx(priv, nonce, to, nil, gas, input)
 }
 
-func (c *Client) DepositERC20(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, amount int64) (*types.Transaction, error) {
+func (c *Client) DepositERC20(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, token common.Address, amount int64) (*types.Transaction, error) {
 	var (
 		auth = bind.NewKeyedTransactor(priv)
 		a    = big.NewInt(amount)
@@ -214,10 +204,10 @@ func (c *Client) DepositERC20(ctx context.Context, priv *ecdsa.PrivateKey, nonce
 			Context:  ctx,
 		}
 	)
-	return c.Bank.DepositERC20(opts, c.erc20Addr, auth.From, a)
+	return c.Bank.DepositERC20(opts, token, auth.From, a)
 }
 
-func (c *Client) DepositNFT(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, tokenid int64) (*types.Transaction, error) {
+func (c *Client) DepositNFT(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, token common.Address, tokenid int64) (*types.Transaction, error) {
 	var (
 		auth = bind.NewKeyedTransactor(priv)
 		id   = big.NewInt(tokenid)
@@ -230,7 +220,7 @@ func (c *Client) DepositNFT(ctx context.Context, priv *ecdsa.PrivateKey, nonce *
 			Context:  ctx,
 		}
 	)
-	return c.Bank.DepositNFT(opts, c.nftAddr, auth.From, id)
+	return c.Bank.DepositNFT(opts, token, auth.From, id)
 }
 
 func (c *Client) Deposit(ctx context.Context, priv *ecdsa.PrivateKey, nonce *big.Int, amount int64) (*types.Transaction, error) {
