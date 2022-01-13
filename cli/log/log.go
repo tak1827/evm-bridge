@@ -19,8 +19,8 @@ const (
 	KeyModule = "mod"
 	KeyEvent  = "event"
 
-	ModuleConfirmer = "confirmer"
-	ModuleBridge    = "bridge"
+	ModuleBridge = "bridge"
+	ModuleCLI    = "cli"
 )
 
 // global
@@ -66,4 +66,11 @@ func Bridge(event string) zerolog.Logger {
 		return Logger.With().Str(KeyModule, ModuleBridge).Logger()
 	}
 	return Logger.With().Str(KeyModule, ModuleBridge).Str(KeyEvent, event).Logger()
+}
+
+func CLI(event string) zerolog.Logger {
+	if event == "" {
+		return Logger.With().Str(KeyModule, ModuleCLI).Logger()
+	}
+	return Logger.With().Str(KeyModule, ModuleCLI).Str(KeyEvent, event).Logger()
 }

@@ -2,27 +2,36 @@ package bridgecli
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/tak1827/evm-bridge/cli/log"
 )
 
-var cfgFile string
+const (
+	EnvPrefix       = "bridgecli"
+	ConfigType      = "toml"
+	ConfigName      = "config"
+	DefaultHomeName = ".bridgecli"
+)
+
+var (
+	cfgFile string
+	homeDir string
+	logger  = log.CLI("")
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "bridgecli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "The cli tool of bridging ERC20 and NFT",
+	Long: `The comand line tool of server side implementaion of ERC20 and NFT bridging implementaion.
+Fetch contract events periodically, then mint new asset to the other chain.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		getConfig()
+		fmt.Println("use `-h` option to see help")
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -38,11 +47,7 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.cli.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&homeDir, "home", "", fmt.Sprintf("the home directory path (default is $HOME/%s/)", DefaultHomeName))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -51,20 +56,49 @@ func initConfig() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
+		// viper.AddConfigPath(".")
+		viper.SetConfigType(ConfigType)
+		viper.SetConfigName(ConfigName)
+	}
+
+	viper.SetEnvPrefix(EnvPrefix)
+	viper.AutomaticEnv()
+}
+
+func handleErr(err error) {
+	if err != nil {
+		logger.Error().Stack().Err(err).Msg("failed serving")
+		logger.Fatal().Msg("stop serving")
+	}
+}
+
+func getConfig() {
+	if homeDir == "" {
 		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".cli" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".cli")
+		handleErr(err)
+		homeDir = home + "/" + DefaultHomeName
 	}
+	viper.AddConfigPath(homeDir)
 
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		// fmt.Printf("using config file: %s\n", viper.ConfigFileUsed())
 	}
+}
+
+func getConfigString(key string, val *string) {
+	if *val == "" {
+		if *val = viper.GetString(key); *val == "" {
+			logger.Fatal().Msgf("no `%s` setting", key)
+		}
+	}
+	logger.Info().Msgf("%s: %s", key, *val)
+}
+
+func getConfigInt(key string, val *int) {
+	if *val == 0 {
+		if *val = viper.GetInt(key); *val == 0 {
+			logger.Fatal().Msgf("no `%s` setting", key)
+		}
+	}
+	logger.Info().Msgf("%s: %d", key, *val)
 }

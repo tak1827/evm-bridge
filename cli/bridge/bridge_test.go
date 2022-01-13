@@ -33,7 +33,7 @@ const (
 func TestHandleLogs(t *testing.T) {
 	var (
 		// ctx, cancel = context.WithCancel(context.Background())
-		ctx  = context.Background()
+		ctx     = context.Background()
 		rotator = NewRotator(2)
 		pairs   = []pb.Pair{
 			pb.Pair{
@@ -66,7 +66,7 @@ func TestHandleLogs(t *testing.T) {
 	require.NoError(t, bridge.Start(ctx))
 
 	for _, pair := range pairs {
-		require.NoError(t, pair.Put(bridge.db))
+		require.NoError(t, pair.Put(bridge.DB))
 	}
 
 	bridge.CustomConfirmedHandler = func(h string) (err error) {
@@ -134,12 +134,12 @@ func TestHandleLogs(t *testing.T) {
 		}
 	}
 
-	require.NoError(t, bridge.ConfirmedBlockERC20.Put(bridge.db, pb.BlockERC20))
-	require.NoError(t, bridge.ConfirmedBlockNFT.Put(bridge.db, pb.BlockNFT))
+	require.NoError(t, bridge.ConfirmedBlockERC20.Put(bridge.DB, pb.BlockERC20))
+	require.NoError(t, bridge.ConfirmedBlockNFT.Put(bridge.DB, pb.BlockNFT))
 
 	tokenids := make(map[uint64]struct{})
 	for _, e := range sentTxs {
-		require.NoError(t, e.Get(bridge.db))
+		require.NoError(t, e.Get(bridge.DB))
 		require.Equal(t, pb.EventStatus_SUCCEEDED, e.GetStatus())
 
 		switch v := e.(type) {
@@ -155,10 +155,10 @@ func TestHandleLogs(t *testing.T) {
 	}
 
 	var block pb.ConfirmedBlock
-	require.NoError(t, block.Get(bridge.db, pb.BlockERC20))
+	require.NoError(t, block.Get(bridge.DB, pb.BlockERC20))
 	require.Equal(t, true, block.Number > 0)
 
-	require.NoError(t, block.Get(bridge.db, pb.BlockNFT))
+	require.NoError(t, block.Get(bridge.DB, pb.BlockNFT))
 	require.Equal(t, true, block.Number > 0)
 
 	// bridge.Close(cancel, 0, true)
@@ -218,7 +218,7 @@ func TestRetry(t *testing.T) {
 	}
 
 	bridge.Start(ctx)
-	pair.Put(bridge.db)
+	pair.Put(bridge.DB)
 
 	timer := time.NewTicker(100 * time.Millisecond)
 	defer timer.Stop()
@@ -247,7 +247,7 @@ func TestRetry(t *testing.T) {
 
 	for id, retry := range retryFlg {
 		event := &pb.EventERC20Deposited{Id: id}
-		event.Get(bridge.db)
+		event.Get(bridge.DB)
 		require.Equal(t, retry, event.Retry)
 		if retry >= 3 {
 			require.Equal(t, pb.EventStatus_FAILED, event.Status)

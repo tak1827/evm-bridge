@@ -25,9 +25,10 @@ type Bridge struct {
 	client      *client.Client
 	reaadClient *client.ReadClient
 
+	DB store.Store
+
 	wallet    Wallet
 	confirmer *confirm.Confirmer
-	db        store.Store
 	logger    zerolog.Logger
 
 	// TODO: cache of addr pair
@@ -54,16 +55,16 @@ func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, con
 	b.confirmer.AfterTxConfirmed = b.confirmedHandler
 	b.confirmer.ErrHandler = b.confirmerErrHandler
 
-	if b.db, err = store.NewLevelDB(path); err != nil {
+	if b.DB, err = store.NewLevelDB(path); err != nil {
 		return
 	}
 	if b.wallet, err = NewWallet(ctx, c, privKey); err != nil {
 		return
 	}
-	if err = b.ConfirmedBlockERC20.Get(b.db, pb.BlockERC20); err != nil {
+	if err = b.ConfirmedBlockERC20.Get(b.DB, pb.BlockERC20); err != nil {
 		return
 	}
-	if err = b.ConfirmedBlockNFT.Get(b.db, pb.BlockNFT); err != nil {
+	if err = b.ConfirmedBlockNFT.Get(b.DB, pb.BlockNFT); err != nil {
 		return
 	}
 
@@ -75,44 +76,47 @@ func NewBridge(ctx context.Context, c *client.Client, rc *client.ReadClient, con
 }
 
 func (b *Bridge) Start(ctx context.Context) (err error) {
+	b.logger.Info().Msg("bridge is starting...")
 	err = b.confirmer.Start(ctx)
 	return
 }
 
 func (b *Bridge) Close(cancel context.CancelFunc, retryLimit int, commitStarts bool) {
 	if !b.canClose() {
+		b.logger.Info().Msg("closing...")
 		// wait until all confirmed
 		timer := time.NewTicker(1 * time.Second)
 		defer timer.Stop()
 
 		var retry int
 		for {
-			select {
-			case <-timer.C:
-				if b.canClose() {
-					break
-				}
-				if retry >= retryLimit {
-					b.logger.Warn().Msgf("faild closing safely, EventMapERC20: %v", b.EventMapERC20)
-					break
-				}
-				retry++
+			<-timer.C
+			if b.canClose() {
+				break
 			}
+
+			b.logger.Info().Msgf("trying safety close, retry:%d, max limit: %d", retry, retryLimit)
+			if retry >= retryLimit {
+				b.logger.Warn().Msgf("faild closing safely, EventMapERC20: %v, EventMapNFT: %v", b.EventMapERC20, b.EventMapNFT)
+				break
+			}
+			retry++
 		}
 	}
 
 	if commitStarts {
-		if err := b.ConfirmedBlockERC20.Put(b.db, pb.BlockERC20); err != nil {
+		if err := b.ConfirmedBlockERC20.Put(b.DB, pb.BlockERC20); err != nil {
 			b.logger.Warn().Msgf("faild to put ConfirmedBlockERC20(%v)", b.ConfirmedBlockERC20)
 		}
-		if err := b.ConfirmedBlockNFT.Put(b.db, pb.BlockNFT); err != nil {
+		if err := b.ConfirmedBlockNFT.Put(b.DB, pb.BlockNFT); err != nil {
 			b.logger.Warn().Msgf("faild to put ConfirmedBlockNFT(%v)", b.ConfirmedBlockNFT)
 		}
+		b.logger.Info().Msgf("commited the last confirmed blocks, erc20: %d, nft: %d", b.ConfirmedBlockERC20.Number, b.ConfirmedBlockNFT.Number)
 	}
 
 	b.confirmer.Close(cancel)
 
-	if err := b.db.Close(); err != nil {
+	if err := b.DB.Close(); err != nil {
 		b.logger.Warn().Msg("faild to close db")
 	}
 }
@@ -174,9 +178,9 @@ func (b *Bridge) FetchNFT(ctx context.Context) (uint64, error) {
 
 func (b *Bridge) handleLogs(ctx context.Context, eventCh chan pb.Event) error {
 	for e := range eventCh {
-		b.logger.Info().Msgf("filtered event: %v", e)
+		b.logger.Info().Msgf("handling event: %v", e)
 
-		if err := e.Get(b.db); err != nil {
+		if err := e.Get(b.DB); err != nil {
 			if !errors.Is(err, store.ErrNotFound) {
 				return err
 			}
@@ -197,7 +201,7 @@ func (b *Bridge) handleLogs(ctx context.Context, eventCh chan pb.Event) error {
 }
 
 func (b *Bridge) send(ctx context.Context, e pb.Event) (hash string, err error) {
-	pair, err := pb.GetPair(b.db, e.GetToken())
+	pair, err := pb.GetPair(b.DB, e.GetToken())
 	if err != nil {
 		err = ErrPairNotFound
 		return
@@ -259,13 +263,13 @@ func (b *Bridge) confirmedHandler(h string) (err error) {
 	}
 	b.deleteEventMap(h)
 
-	b.logger.Info().Msgf("confirmed, hash: %s", h)
-
 	e.SetStatus(pb.EventStatus_SUCCEEDED)
 
-	if err = e.Put(b.db); err != nil {
+	if err = e.Put(b.DB); err != nil {
 		return
 	}
+
+	b.logger.Info().Msgf("confirmed, hash: %s, event: %v", h, e)
 
 	return
 }
@@ -284,7 +288,7 @@ func (b *Bridge) confirmerErrHandler(h string, err error) {
 	if e.GetRetry() >= 3 || !errors.Is(err, confirm.ErrTxFailed) {
 		b.logger.Warn().Msgf("failed handle erc20 log(%v), hash: %s, err: %v", e, h, err)
 		e.SetStatus(pb.EventStatus_FAILED)
-		if err = e.Put(b.db); err != nil {
+		if err = e.Put(b.DB); err != nil {
 			b.logger.Warn().Msgf("failed to put event(%v), hash: %s, err: %v", e, h, err)
 		}
 		return
