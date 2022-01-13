@@ -9,6 +9,7 @@ proto:
 		$(PROTO_SRC_FILES)
 
 install:
+	cd ./cmd/bridgecli/; \
 	go install -mod=readonly
 
 .PHONY: test
@@ -26,4 +27,5 @@ lint:
 	go vet ./...
 
 build:
+	cd ./cmd/bridgecli/; \
 	go build -o bridgecli -gcflags '-m'

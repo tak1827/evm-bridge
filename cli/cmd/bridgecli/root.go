@@ -1,4 +1,4 @@
-package bridgecli
+package main
 
 import (
 	"fmt"

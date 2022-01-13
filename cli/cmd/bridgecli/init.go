@@ -1,8 +1,7 @@
-package bridgecli
+package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -46,10 +45,9 @@ var initCmd = &cobra.Command{
 	Long:  `initalize home directory creating the default config file`,
 	Run: func(cmd *cobra.Command, args []string) {
 		getConfig()
-		if _, err := os.Stat(homeDir); errors.Is(err, os.ErrNotExist) {
-			err = os.Mkdir(homeDir, 0755)
-			handleErr(err)
-		}
+		os.RemoveAll(homeDir)
+		err := os.Mkdir(homeDir, 0755)
+		handleErr(err)
 		path := homeDir + "/" + ConfigName + "." + ConfigType
 		WriteConfigFile(path, nil)
 		fmt.Printf("successfully initalized home directory: %s\n", path)
